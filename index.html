@@ -1258,6 +1258,11 @@ const BASE = 'https://www.googleapis.com/youtube/v3';
    globalNextPageToken: single shared token for infinite scroll
    scrollFetching: guard to prevent concurrent scroll fetches
 ============================================================ */
+  // ─── SHORTS DEDICATED STATE ───────────────────────────────────
+let shortsNextPageToken  = null;   // shorts-specific token (separate namespace)
+let shortsKeywords       = ['shorts', 'trending shorts', 'viral shorts', 'funny shorts', 'comedy shorts'];
+let currentShortsKwIndex = 0;      // rotates keyword when current page token exhausted
+// ──────────────────────────────────────────────────────────────
 let activeTab       = 'home';
 let homeLoaded      = false;
 let shortsLoaded    = false;
@@ -1950,16 +1955,21 @@ const VIEW_MODE_BY_STACK = {
   watch:   ['watch']
 };
 window.addEventListener('scroll', () => {
-  const allowedModes = VIEW_MODE_BY_STACK[viewStack];
-  if (!allowedModes || !allowedModes.includes(viewMode)) return;
-  // QUOTA-FIX 2: isFetching is the master lock; scrollFetching stays as a
-  // secondary guard scoped to the scroll engine itself.
-  if (!globalNextPageToken || scrollFetching || isFetching) return;
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+  if (window.innerHeight + window.scrollY < document.body.offsetHeight - 600) return;
+  if (isFetching || scrollFetching) return;
+
+  const allowed = VIEW_MODE_BY_STACK[viewStack] || [];
+  if (!allowed.includes(viewMode)) return;
+
+  if (viewMode === 'shorts') {
+    // Shorts: fires as long as globalNextPageToken is truthy (real or sentinel)
+    if (!globalNextPageToken) return;
+    infiniteScrollFetch();
+  } else {
+    if (!globalNextPageToken) return;
     infiniteScrollFetch();
   }
 }, { passive: true });
-
 /* ============================================================
    ╔══════════════════════════════════════════════════════════╗
    ║  FIX 1: HOME FEED — India-only, randomised on refresh   ║
@@ -2123,7 +2133,9 @@ async function loadShorts(opts = {}) {
   viewMode = 'shorts';
 
   if (!append) {
-    globalNextPageToken = null;
+    shortsNextPageToken  = null;
+    globalNextPageToken  = null;
+    currentShortsKwIndex = 0;
     shortsContent.innerHTML = `
       <div class="section-title-row"><div class="section-title">⚡ Shorts</div></div>
       <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>`;
@@ -2133,16 +2145,30 @@ async function loadShorts(opts = {}) {
   if (!grid) { isFetching = false; return; }
 
   try {
-    let url = `${BASE}/search?part=snippet&maxResults=20&q=shorts&type=video&videoDuration=short&regionCode=IN`;
-    if (append && globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const activeKeyword = shortsKeywords[currentShortsKwIndex % shortsKeywords.length];
+    let url = `${BASE}/search?part=snippet&maxResults=20&q=${encodeURIComponent(activeKeyword)}&type=video&videoDuration=short&regionCode=IN`;
+
+    if (append && shortsNextPageToken) {
+      url += `&pageToken=${encodeURIComponent(shortsNextPageToken)}`;
+    }
 
     const data = await apiFetch(url);
     const items = data.items || [];
 
-    // Update token BEFORE rendering so next scroll trigger sees it immediately
-    globalNextPageToken = data.nextPageToken || null;
+    shortsNextPageToken = data.nextPageToken || null;
 
-    if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); return; }
+    if (shortsNextPageToken) {
+      globalNextPageToken = shortsNextPageToken;
+    } else {
+      currentShortsKwIndex++;
+      globalNextPageToken = '__shorts_rotate__';
+    }
+
+    if (!items.length && !append) {
+      grid.innerHTML = emptyHtml('No shorts found.');
+      globalNextPageToken = null;
+      return;
+    }
 
     const cards = items.map(buildShortCard).join('');
     if (append) {
@@ -2153,8 +2179,11 @@ async function loadShorts(opts = {}) {
     }
     attachCardInteractions(shortsContent);
     shortsLoaded = true;
+
   } catch (err) {
     hideScrollSpinner();
+    globalNextPageToken = null;
+    shortsNextPageToken = null;
     if (append) errorOrQuotaToast(err);
     else shortsContent.innerHTML = errorOrQuotaHtml(err);
   } finally {
@@ -2163,20 +2192,21 @@ async function loadShorts(opts = {}) {
 }
 
 async function appendShortsFeed() {
-  // Guard: don't proceed if no token or already fetching
-  if (isFetching || !globalNextPageToken) return;
+  if (isFetching) return;
+  if (!globalNextPageToken) return;
 
   const grid = document.getElementById('shortsGrid');
   if (!grid) return;
 
-  // Show spinner BEFORE setting isFetching so loadShorts doesn't see a stale lock
   showScrollSpinner('shortsGrid');
 
-  // Delegate entirely to loadShorts with append mode
-  // loadShorts manages isFetching + token + spinner hide + card inject
+  if (globalNextPageToken === '__shorts_rotate__') {
+    shortsNextPageToken = null;
+    globalNextPageToken = null;
+  }
+
   await loadShorts({ append: true });
 }
-
 /* ============================================================
    ╔══════════════════════════════════════════════════════════╗
    ║  FIX 3: CATEGORY FEED — infinite scroll ready           ║
