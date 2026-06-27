@@ -1206,6 +1206,12 @@ let channelScrollCtx = null; // { channelId, tab } — so scroll knows what to l
 let watchVideoId   = null;
 let watchLiked     = false;
 let watchDisliked  = false;
+// FIX 4: dedicated pagination state for the Watch Page's related-videos feed
+let watchPageNextToken = null; // separate token namespace from globalNextPageToken
+let watchRecMode    = 'related'; // 'related' | 'query' — which endpoint strategy is paginating
+let watchRecQuery   = '';        // fallback search query used when 'related' mode isn't available
+let preWatchToken   = null;      // snapshot of globalNextPageToken before entering watch page
+let preWatchMode    = null;      // snapshot of viewMode before entering watch page
 
 // View stack
 let viewStack = 'main';
@@ -1343,13 +1349,36 @@ function randomChoice(arr) {
 }
 async function apiFetch(url) {
   const sep = url.includes('?') ? '&' : '?';
-  const res = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY));
+  let res;
+  try {
+    res = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY));
+  } catch (networkErr) {
+    // FIX 2: network failure (offline, CORS, DNS, etc.) never throws raw to caller unhandled
+    const e = new Error('Network error — please check your connection.');
+    e.status = 0;
+    e.isQuota = false;
+    throw e;
+  }
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try { const j = await res.json(); msg = j?.error?.message || msg; } catch(_) {}
-    throw new Error(msg);
+    let reason = '';
+    try {
+      const j = await res.json();
+      msg = j?.error?.message || msg;
+      reason = j?.error?.errors?.[0]?.reason || '';
+    } catch(_) {}
+    const e = new Error(msg);
+    e.status = res.status;
+    // FIX 2: flag quota-exceeded explicitly so UI can show the dedicated banner
+    e.isQuota = res.status === 403 || reason === 'quotaExceeded' || reason === 'dailyLimitExceeded';
+    throw e;
   }
-  return res.json();
+  // FIX 2: guarantee callers always get a safely-shaped object, never undefined
+  let json;
+  try { json = await res.json(); } catch(_) { json = {}; }
+  if (!json || typeof json !== 'object') json = {};
+  if (!Array.isArray(json.items)) json.items = json.items || [];
+  return json;
 }
 
 /* ============================================================
@@ -1387,6 +1416,23 @@ function errorHtml(msg) {
     </svg>
     <span><strong>Could not load content.</strong> ${escapeHtml(msg)}. Check your API key, quota, or network.</span>
   </div>`;
+}
+// FIX 2: dedicated premium "quota exceeded" banner — never leave a blank/broken screen on 403
+function quotaErrorHtml() {
+  return `<div class="error-banner">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span><strong>Daily API Limit Reached.</strong> Please update your Google Cloud Console API Key or try again later.</span>
+  </div>`;
+}
+// FIX 2: routes any caught error to the right banner — quota-specific vs generic
+function errorOrQuotaHtml(err) {
+  return (err && err.isQuota) ? quotaErrorHtml() : errorHtml(err?.message || 'Unknown error');
+}
+// FIX 2: routes any caught error to the right toast message during append/scroll fetches
+function errorOrQuotaToast(err) {
+  showToast(err && err.isQuota ? 'Daily API Limit Reached. Update your API key.' : 'Could not load more content.');
 }
 function emptyHtml(msg = 'Nothing found.') {
   return `<div class="empty-state">
@@ -1726,7 +1772,7 @@ function hideScrollSpinner() {
 
 async function infiniteScrollFetch() {
   if (scrollFetching || !globalNextPageToken) return;
-  scrollFetching = true;
+  scrollFetching = true; // isLoading guard — blocks any other fetch until this resolves
 
   switch (viewMode) {
     case 'home':
@@ -1744,15 +1790,28 @@ async function infiniteScrollFetch() {
     case 'channel':
       await appendChannelFeed();
       break;
+    case 'watch':
+      // FIX 4: infinite scroll for Video Watch Page recommendations
+      await appendWatchFeed();
+      break;
   }
 
   scrollFetching = false;
 }
 
+// FIX 1: a single, structured global scroll listener — there is only ever ONE
+// of these attached for the lifetime of the page. Every view transition
+// (tab switch, category click, refresh, watch/channel open) only ever
+// mutates `viewMode` / `viewStack` / `globalNextPageToken`; it never adds
+// another listener, so duplicate parallel scroll-fetches are impossible.
+const VIEW_MODE_BY_STACK = {
+  main:    ['home', 'category', 'search', 'shorts'],
+  channel: ['channel'],
+  watch:   ['watch']
+};
 window.addEventListener('scroll', () => {
-  // Only trigger when the main feed is visible and there is more to load
-  if (viewStack !== 'main' && viewMode !== 'channel') return;
-  if (viewMode === 'channel' && viewStack !== 'channel') return;
+  const allowedModes = VIEW_MODE_BY_STACK[viewStack];
+  if (!allowedModes || !allowedModes.includes(viewMode)) return;
   if (!globalNextPageToken || scrollFetching) return;
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
     infiniteScrollFetch();
@@ -1835,8 +1894,8 @@ async function loadHome(opts = {}) {
     homeLoaded = true;
   } catch(err) {
     hideScrollSpinner();
-    if (append) showToast('Could not load more videos.');
-    else homeContent.innerHTML = errorHtml(err.message);
+    if (append) errorOrQuotaToast(err);
+    else homeContent.innerHTML = errorOrQuotaHtml(err);
   }
 }
 
@@ -1890,7 +1949,7 @@ function refreshFeed() {
       attachCardInteractions(homeContent);
       homeLoaded = true;
     })
-    .catch(err => { grid.innerHTML = errorHtml(err.message); })
+    .catch(err => { grid.innerHTML = errorOrQuotaHtml(err); })
     .finally(() => {
       const b = document.getElementById('refreshFeedBtn');
       if (b) setTimeout(() => b.classList.remove('spinning'), 100);
@@ -1925,8 +1984,8 @@ async function loadShorts(opts = {}) {
     shortsLoaded = true;
   } catch(err) {
     hideScrollSpinner();
-    if (append) showToast('Could not load more shorts.');
-    else shortsContent.innerHTML = errorHtml(err.message);
+    if (append) errorOrQuotaToast(err);
+    else shortsContent.innerHTML = errorOrQuotaHtml(err);
   }
 }
 
@@ -2001,7 +2060,7 @@ async function loadCategoryFeed(cat) {
     attachCardInteractions(homeContent);
     homeLoaded = true;
   } catch(err) {
-    homeContent.innerHTML = errorHtml(err.message);
+    homeContent.innerHTML = errorOrQuotaHtml(err);
   }
 }
 
@@ -2023,7 +2082,7 @@ async function appendCategoryFeed() {
     attachCardInteractions(homeContent);
   } catch(err) {
     hideScrollSpinner();
-    showToast('Could not load more videos.');
+    errorOrQuotaToast(err);
   }
 }
 
@@ -2081,7 +2140,7 @@ async function doSearch(query) {
       container.innerHTML = html;
     }
     attachCardInteractions(container);
-  } catch(err) { container.innerHTML = errorHtml(err.message); }
+  } catch(err) { container.innerHTML = errorOrQuotaHtml(err); }
 }
 
 async function appendSearchFeed() {
@@ -2110,7 +2169,7 @@ async function appendSearchFeed() {
     }
   } catch(err) {
     hideScrollSpinner();
-    showToast('Could not load more results.');
+    errorOrQuotaToast(err);
   }
 }
 
@@ -2170,6 +2229,17 @@ function openWatchPage(videoId, titleHint) {
   watchLiked = false;
   watchDisliked = false;
 
+  // FIX 4: snapshot whatever feed/token was active before entering the watch
+  // page, then take over the global scroll engine for the related-videos rail.
+  preWatchMode  = viewMode;
+  preWatchToken = globalNextPageToken;
+  viewMode = 'watch';
+  globalNextPageToken = null;
+  watchPageNextToken  = null;
+  watchRecMode  = 'related';
+  watchRecQuery = titleHint || 'trending';
+  scrollFetching = false;
+
   showView('watch');
 
   watchPlayerWrap.innerHTML = `<iframe
@@ -2187,6 +2257,7 @@ function openWatchPage(videoId, titleHint) {
       <div class="skeleton skeleton-line w60" style="height:13px;width:160px;"></div>
       <div class="skeleton skeleton-line w40" style="height:11px;width:100px;"></div>
     </div>`;
+  // FIX 3: wipe the rec rail once and show shimmer before the new fetch fires
   watchRecList.innerHTML = buildRecSkeletons(10);
 
   watchLikeBtn.classList.remove('liked');
@@ -2194,88 +2265,132 @@ function openWatchPage(videoId, titleHint) {
   watchCopyBtn.classList.remove('copied');
   watchLikeCount.textContent = 'Like';
 
-  try {
-    Promise.all([
-      apiFetch(`${BASE}/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}`),
-      apiFetch(`${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(videoId)}&type=video`)
-        .catch(() => apiFetch(`${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(titleHint||'trending')}&type=video`))
-    ]).then(([vidData, recData]) => {
-      const vid = vidData.items && vidData.items[0];
-      if (vid) {
-        const s = vid.snippet || {}, st = vid.statistics || {};
-        watchTitle.textContent = s.title || titleHint || '';
-        const views = formatViews(st.viewCount);
-        const likes = st.likeCount ? formatCount(st.likeCount) + ' likes' : '';
-        const date = s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
-        watchStatsRow.innerHTML = [views, likes, date].filter(Boolean).map((t,i,a) =>
-          `<span>${escapeHtml(t)}</span>${i<a.length-1?'<span class="dot"></span>':''}`
-        ).join('');
-        watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
+  Promise.all([
+    apiFetch(`${BASE}/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}`),
+    apiFetch(`${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(videoId)}&type=video`)
+      .then(d => { watchRecMode = 'related'; return d; })
+      .catch(() => {
+        // FIX 4: relatedToVideoId can be unavailable/quota-blocked on its own;
+        // fall back to a query-based feed and remember the mode so that
+        // appendWatchFeed() keeps paginating against the SAME endpoint.
+        watchRecMode = 'query';
+        return apiFetch(`${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(watchRecQuery)}&type=video`);
+      })
+  ]).then(([vidData, recData]) => {
+    const vid = vidData?.items?.[0];
+    if (vid) {
+      const s = vid.snippet || {}, st = vid.statistics || {};
+      watchTitle.textContent = s.title || titleHint || '';
+      const views = formatViews(st.viewCount);
+      const likes = st.likeCount ? formatCount(st.likeCount) + ' likes' : '';
+      const date = s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
+      watchStatsRow.innerHTML = [views, likes, date].filter(Boolean).map((t,i,a) =>
+        `<span>${escapeHtml(t)}</span>${i<a.length-1?'<span class="dot"></span>':''}`
+      ).join('');
+      watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
 
-        const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
-        const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
-        watchChannelRow.innerHTML = `
-          <span class="watch-ch-avatar-init" style="background:${avatarColor(s.channelTitle||'')};">${initial}</span>
-          <div class="watch-ch-info">
-            <div class="watch-ch-name" data-channelid="${channelId}">${channelTitle}</div>
-            <div class="watch-ch-subs" id="watchChSubs">Loading subscribers…</div>
-          </div>
-          <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
+      const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
+      const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
+      watchChannelRow.innerHTML = `
+        <span class="watch-ch-avatar-init" style="background:${avatarColor(s.channelTitle||'')};">${initial}</span>
+        <div class="watch-ch-info">
+          <div class="watch-ch-name" data-channelid="${channelId}">${channelTitle}</div>
+          <div class="watch-ch-subs" id="watchChSubs">Loading subscribers…</div>
+        </div>
+        <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
 
-        if (channelId) {
-          apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
-            const st2 = ch.items && ch.items[0] && ch.items[0].statistics;
-            const subs = st2?.hiddenSubscriberCount ? 'Subscribers hidden' : (formatCount(st2?.subscriberCount)||'');
-            const el = document.getElementById('watchChSubs');
-            if (el) el.textContent = subs ? subs + ' subscribers' : '';
+      if (channelId) {
+        apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
+          const st2 = ch?.items?.[0]?.statistics;
+          const subs = st2?.hiddenSubscriberCount ? 'Subscribers hidden' : (formatCount(st2?.subscriberCount)||'');
+          const el = document.getElementById('watchChSubs');
+          if (el) el.textContent = subs ? subs + ' subscribers' : '';
 
-            const avatarUrl = ch.items&&ch.items[0]&&ch.items[0].snippet?.thumbnails?.high?.url;
-            if (avatarUrl) {
-              const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
-              if (initEl) {
-                const img = document.createElement('img');
-                img.className = 'watch-ch-avatar'; img.src = avatarUrl; img.alt = channelTitle;
-                img.onerror = () => {};
-                initEl.replaceWith(img);
-              }
+          const avatarUrl = ch?.items?.[0]?.snippet?.thumbnails?.high?.url;
+          if (avatarUrl) {
+            const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
+            if (initEl) {
+              const img = document.createElement('img');
+              img.className = 'watch-ch-avatar'; img.src = avatarUrl; img.alt = channelTitle;
+              img.onerror = () => {};
+              initEl.replaceWith(img);
             }
-          }).catch(()=>{});
-        }
-
-        const subBtn = document.getElementById('watchSubBtn');
-        if (subBtn) {
-          let subscribed = false;
-          subBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            subscribed = !subscribed;
-            subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
-            subBtn.classList.toggle('subscribed', subscribed);
-            showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
-          });
-        }
-
-        const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
-        if (chNameEl) {
-          chNameEl.addEventListener('click', e => {
-            e.stopPropagation();
-            if (channelId) openChannelPage(channelId);
-          });
-        }
+          }
+        }).catch(()=>{}); // FIX 2: a failed subscriber-count fetch must never break the page
       }
 
-      const recItems = (recData.items||[]).filter(i => i.id?.videoId);
-      if (recItems.length) {
-        watchRecList.innerHTML = recItems.map(buildRecCard).join('');
-        attachCardInteractions(watchRecList);
-      } else {
-        watchRecList.innerHTML = emptyHtml('No recommendations available.');
+      const subBtn = document.getElementById('watchSubBtn');
+      if (subBtn) {
+        let subscribed = false;
+        subBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          subscribed = !subscribed;
+          subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
+          subBtn.classList.toggle('subscribed', subscribed);
+          showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
+        });
       }
-    }).catch(err => {
-      watchStatsRow.innerHTML = '';
-      watchChannelRow.innerHTML = errorHtml(err.message);
-    });
+
+      const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
+      if (chNameEl) {
+        chNameEl.addEventListener('click', e => {
+          e.stopPropagation();
+          if (channelId) openChannelPage(channelId);
+        });
+      }
+    }
+
+    // FIX 2 + 4: safe optional chaining on items, store the pagination token
+    // returned by whichever endpoint actually served the recommendations
+    const recItems = (recData?.items || []).filter(i => i?.id?.videoId);
+    watchPageNextToken = recData?.nextPageToken || null;
+    globalNextPageToken = watchPageNextToken; // keep the shared scroll engine in sync
+
+    if (recItems.length) {
+      watchRecList.innerHTML = recItems.map(buildRecCard).join('');
+      attachCardInteractions(watchRecList);
+    } else {
+      watchRecList.innerHTML = emptyHtml('No recommendations available.');
+    }
+  }).catch(err => {
+    watchStatsRow.innerHTML = '';
+    watchChannelRow.innerHTML = errorOrQuotaHtml(err);
+    // FIX 2: never leave the rec rail stuck on shimmer when the call fails
+    watchRecList.innerHTML = errorOrQuotaHtml(err);
+    watchPageNextToken = null;
+    globalNextPageToken = null;
+  });
+}
+
+// FIX 4: called by the global infinite-scroll engine when viewMode === 'watch'.
+// Fetches the next page of related/recommended videos using watchPageNextToken
+// and appends them WITHOUT touching the iframe player container.
+async function appendWatchFeed() {
+  if (!watchVideoId) return;
+  showScrollSpinner('watchRecList');
+  try {
+    let url;
+    if (watchRecMode === 'related') {
+      url = `${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(watchVideoId)}&type=video`;
+    } else {
+      url = `${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(watchRecQuery)}&type=video`;
+    }
+    if (watchPageNextToken) url += `&pageToken=${encodeURIComponent(watchPageNextToken)}`;
+
+    const data = await apiFetch(url);
+    const items = (data?.items || []).filter(i => i?.id?.videoId);
+    watchPageNextToken = data?.nextPageToken || null;
+    globalNextPageToken = watchPageNextToken; // keep shared engine in sync
+    hideScrollSpinner();
+
+    if (!items.length) return;
+    watchRecList.insertAdjacentHTML('beforeend', items.map(buildRecCard).join(''));
+    attachCardInteractions(watchRecList);
   } catch(err) {
-    watchChannelRow.innerHTML = errorHtml(err.message);
+    hideScrollSpinner();
+    errorOrQuotaToast(err);
+    // On a 403 mid-scroll, stop trying to paginate further rather than spamming the API
+    if (err && err.isQuota) { watchPageNextToken = null; globalNextPageToken = null; }
   }
 }
 
@@ -2310,8 +2425,15 @@ watchCopyBtn.addEventListener('click', () => {
 watchBackBtn.addEventListener('click', () => {
   watchPlayerWrap.innerHTML = '';
   watchVideoId = null;
-  // restore scroll context
+  // FIX 1/4: kill watch-page scroll state and restore whatever feed/token
+  // was active before the watch page was opened, so Home/Category/Shorts
+  // infinite scroll resumes exactly where it left off.
   scrollFetching = false;
+  watchPageNextToken = null;
+  viewMode = preWatchMode || (activeTab === 'shorts' ? 'shorts' : (activeCategory !== 'All' ? 'category' : 'home'));
+  globalNextPageToken = preWatchToken || null;
+  preWatchMode = null;
+  preWatchToken = null;
   showView('main');
 });
 
@@ -2375,7 +2497,7 @@ async function openChannelPage(channelId) {
     renderChannelShell(ch, channelId);
     loadChannelTab('home', channelId, ch.snippet);
   } catch(err) {
-    channelPageContent.innerHTML = errorHtml(err.message);
+    channelPageContent.innerHTML = errorOrQuotaHtml(err);
   }
 }
 
@@ -2495,7 +2617,7 @@ async function loadChannelTab(tab, channelId, sn) {
           </div>`;
       }).join('');
       area.innerHTML = `<div class="playlists-grid">${cards}</div>`;
-    } catch(err) { area.innerHTML = errorHtml(err.message); }
+    } catch(err) { area.innerHTML = errorOrQuotaHtml(err); }
     return;
   }
 
@@ -2526,7 +2648,7 @@ async function loadChannelTab(tab, channelId, sn) {
       grid.innerHTML = items.map(v => buildSearchVideoCard(v)).join('');
     }
     attachCardInteractions(area);
-  } catch(err) { area.innerHTML = errorHtml(err.message); }
+  } catch(err) { area.innerHTML = errorOrQuotaHtml(err); }
 }
 
 // FIX 4: called by infinite scroll engine when viewMode === 'channel'
@@ -2560,7 +2682,7 @@ async function appendChannelFeed() {
     if (area) attachCardInteractions(area);
   } catch(err) {
     hideScrollSpinner();
-    showToast('Could not load more channel videos.');
+    errorOrQuotaToast(err);
   }
 }
 
