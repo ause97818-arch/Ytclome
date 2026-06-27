@@ -1,0 +1,2714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ViewTube — Real-time YouTube Clone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+  ============================================================ */
+  :root {
+    --cream:   #F6F3ED;
+    --slate:   #C2CBD3;
+    --navy:    #313851;
+    --navy-60: rgba(49,56,81,0.6);
+    --navy-85: rgba(49,56,81,0.85);
+    --white:   #FFFFFF;
+    --error:   #C0392B;
+    --success: #27AE60;
+    --like-active: #E53935;
+    --shadow-sm: 0 2px 8px rgba(49,56,81,0.08);
+    --shadow-md: 0 6px 24px rgba(49,56,81,0.13);
+    --shadow-lg: 0 16px 48px rgba(49,56,81,0.18);
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+    --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ============================================================
+     RESET & BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--cream);
+    color: var(--navy);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  a { text-decoration: none; color: inherit; }
+  img { display: block; width: 100%; }
+  button { cursor: pointer; border: none; background: none; font-family: var(--font); }
+
+  /* ============================================================
+     SCROLLBAR
+  ============================================================ */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: var(--radius-full); }
+
+  /* ============================================================
+     HEADER / NAVBAR
+  ============================================================ */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--cream);
+    border-bottom: 1.5px solid var(--slate);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 20px;
+    height: 64px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.25rem; font-weight: 800; color: var(--navy);
+    white-space: nowrap; flex-shrink: 0;
+    letter-spacing: -0.03em; cursor: pointer;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+
+  .search-bar {
+    flex: 1; max-width: 540px;
+    display: flex; align-items: center;
+    background: var(--white);
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .search-bar:focus-within {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(49,56,81,0.1);
+  }
+  .search-bar input {
+    flex: 1; border: none; outline: none;
+    padding: 10px 18px;
+    font-family: var(--font); font-size: 0.9rem;
+    background: transparent; color: var(--navy);
+  }
+  .search-bar input::placeholder { color: var(--slate); }
+  .search-btn {
+    padding: 10px 18px;
+    background: var(--navy); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--transition);
+    flex-shrink: 0;
+  }
+  .search-btn:hover { background: #1e2437; }
+  .search-btn svg { width: 18px; height: 18px; }
+
+  /* ============================================================
+     TOP TABS NAV (Home / Shorts)
+  ============================================================ */
+  .tabs-nav {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 20px;
+    display: flex; gap: 4px;
+    border-bottom: 1.5px solid var(--slate);
+    background: var(--cream);
+  }
+  .tab-btn {
+    padding: 14px 22px;
+    font-family: var(--font); font-size: 0.875rem; font-weight: 600;
+    color: var(--navy-60);
+    border-bottom: 2.5px solid transparent;
+    transition: color var(--transition), border-color var(--transition);
+    position: relative; bottom: -1.5px;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* ============================================================
+     CATEGORY TAGS BAR
+  ============================================================ */
+  .category-bar-wrap {
+    background: var(--cream);
+    border-bottom: 1px solid var(--slate);
+    position: sticky; top: 64px; z-index: 90;
+  }
+  .category-bar {
+    max-width: 1400px; margin: 0 auto;
+    padding: 10px 20px;
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .category-bar::-webkit-scrollbar { display: none; }
+  .category-pill {
+    flex-shrink: 0;
+    padding: 7px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700;
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--slate);
+    transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+  .category-pill:hover {
+    border-color: var(--navy);
+    transform: translateY(-1px);
+  }
+  .category-pill.active {
+    background: var(--navy);
+    color: var(--cream);
+    border-color: var(--navy);
+  }
+
+  /* ============================================================
+     MAIN CONTENT AREA
+  ============================================================ */
+  .main {
+    max-width: 1400px; margin: 0 auto;
+    padding: 32px 20px;
+  }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--navy); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title span { color: var(--slate); font-weight: 500; font-size: 0.85rem; }
+
+  .section-title-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  .section-title-row .section-title { margin-bottom: 0; }
+
+  /* ============================================================
+     REFRESH BUTTON
+  ============================================================ */
+  .refresh-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 18px;
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 700;
+    flex-shrink: 0;
+    transition: background var(--transition), transform var(--transition), border-color var(--transition);
+  }
+  .refresh-btn:hover { border-color: var(--navy); transform: translateY(-1px); background: var(--cream); }
+  .refresh-btn:active { transform: translateY(0) scale(0.97); }
+  .refresh-btn svg { width: 15px; height: 15px; transform-origin: center; }
+  .refresh-btn.spinning svg { animation: spin360 0.6s linear; }
+  @keyframes spin360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     INFINITE SCROLL SENTINEL / SPINNER
+  ============================================================ */
+  .scroll-spinner {
+    display: flex; justify-content: center; align-items: center;
+    padding: 32px 0; gap: 10px;
+    color: var(--navy-60); font-size: 0.82rem; font-weight: 600;
+  }
+  .scroll-spinner svg {
+    width: 22px; height: 22px;
+    animation: spin360 0.8s linear infinite;
+    color: var(--navy);
+  }
+
+  /* ============================================================
+     GRID LAYOUTS
+  ============================================================ */
+  .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .shorts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+  .channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  .mixed-grid {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  /* ============================================================
+     VIDEO CARD  — canonical card used by home feed AND category feed
+  ============================================================ */
+  .video-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .video-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-md);
+  }
+  .thumb-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--slate);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .thumb-wrap img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform var(--transition);
+  }
+  .video-card:hover .thumb-wrap img { transform: scale(1.04); }
+  .duration-badge {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.78);
+    color: #fff; font-size: 0.72rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  .play-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(49,56,81,0.18);
+    opacity: 0; transition: opacity var(--transition);
+  }
+  .video-card:hover .play-overlay { opacity: 1; }
+  .play-overlay svg { width: 52px; height: 52px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+
+  .card-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .card-title {
+    font-size: 0.875rem; font-weight: 600; color: var(--navy);
+    line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .card-meta {
+    font-size: 0.78rem; color: var(--navy-60); font-weight: 500;
+    display: flex; flex-direction: column; gap: 3px;
+    overflow: hidden;
+  }
+  .card-channel { font-weight: 600; color: var(--navy); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-stats { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .card-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); flex-shrink: 0; }
+
+  /* ============================================================
+     CHANNEL LINK ROW (clickable avatar + name on cards)
+  ============================================================ */
+  .card-channel-row {
+    display: flex; align-items: center; gap: 7px;
+    cursor: pointer; margin-bottom: 8px;
+    min-width: 0; overflow: hidden;
+  }
+  .card-channel-row:hover .card-channel { text-decoration: underline; }
+  .channel-avatar-mini {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.68rem; font-weight: 800;
+    flex-shrink: 0; letter-spacing: 0;
+  }
+  .channel-avatar-mini.sm { width: 16px; height: 16px; font-size: 0.55rem; }
+
+  /* ============================================================
+     SHARE BUTTON
+  ============================================================ */
+  .share-btn {
+    position: absolute; z-index: 3;
+    top: 8px; right: 8px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(49,56,81,0.55);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .share-btn:hover { background: var(--navy); transform: scale(1.08); }
+  .share-btn:active { transform: scale(0.94); }
+  .share-btn svg { width: 15px; height: 15px; }
+  .share-btn-row { top: 6px; right: 6px; }
+
+  /* ============================================================
+     SHORT CARD (9:16)
+  ============================================================ */
+  .short-card {
+    background: var(--navy);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    aspect-ratio: 9/16;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .short-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-md);
+  }
+  .short-card img {
+    width: 100%; height: 100%; object-fit: cover;
+    opacity: 0.88; transition: opacity var(--transition);
+  }
+  .short-card:hover img { opacity: 1; }
+  .short-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%);
+    padding: 14px 10px 12px;
+  }
+  .short-title {
+    font-size: 0.75rem; font-weight: 600; color: #fff;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .short-channel {
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 6px; font-size: 0.68rem; font-weight: 700;
+    color: rgba(255,255,255,0.88); cursor: pointer;
+  }
+  .short-channel:hover span:last-child { text-decoration: underline; }
+  .short-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: var(--navy); color: var(--cream);
+    font-size: 0.65rem; font-weight: 700;
+    padding: 2px 7px; border-radius: var(--radius-full);
+    letter-spacing: 0.04em;
+  }
+  .share-btn-short { top: 8px; right: 8px; width: 28px; height: 28px; }
+  .share-btn-short svg { width: 13px; height: 13px; }
+  .short-play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity var(--transition);
+  }
+  .short-card:hover .short-play { opacity: 1; }
+  .short-play svg { width: 44px; height: 44px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+  /* ============================================================
+     CHANNEL CARD (search result)
+  ============================================================ */
+  .channel-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 24px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; text-align: center;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .channel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .channel-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--cream);
+    box-shadow: 0 0 0 2px var(--navy);
+    background: var(--slate);
+  }
+  .channel-name { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
+  .channel-desc {
+    font-size: 0.76rem; color: var(--navy-60); font-weight: 500;
+    line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .subscribe-btn {
+    background: var(--navy); color: var(--white);
+    font-family: var(--font); font-size: 0.78rem; font-weight: 700;
+    padding: 8px 20px; border-radius: var(--radius-full);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .subscribe-btn:hover { background: #1e2437; transform: scale(1.04); }
+
+  /* ============================================================
+     MIXED SEARCH RESULT ROW
+  ============================================================ */
+  .result-row {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px; box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .result-row:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(3px);
+  }
+  .result-thumb {
+    flex-shrink: 0; width: 180px; aspect-ratio: 16/9;
+    border-radius: var(--radius-sm); overflow: hidden;
+    background: var(--slate);
+    position: relative;
+  }
+  .result-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .result-info { flex: 1; padding: 4px 0; min-width: 0; overflow: hidden; }
+  .result-title {
+    font-size: 0.95rem; font-weight: 700; color: var(--navy);
+    line-height: 1.4; margin-bottom: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .result-meta { font-size: 0.78rem; color: var(--navy-60); font-weight: 500; }
+  .result-channel {
+    font-weight: 600; color: var(--navy); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+    width: fit-content;
+  }
+  .result-channel:hover span:last-child { text-decoration: underline; }
+  .result-desc {
+    font-size: 0.78rem; color: var(--navy-60);
+    line-height: 1.5; margin-top: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ============================================================
+     SKELETON / SHIMMER
+  ============================================================ */
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #e8e4dd 25%, #f0ece6 50%, #e8e4dd 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: var(--radius-sm);
+  }
+  .skeleton-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .skeleton-thumb { aspect-ratio: 16/9; }
+  .skeleton-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .skeleton-line { height: 12px; }
+  .skeleton-line.w80 { width: 80%; }
+  .skeleton-line.w60 { width: 60%; }
+  .skeleton-line.w40 { width: 40%; }
+  .skeleton-short { aspect-ratio: 9/16; border-radius: var(--radius-md); }
+
+  /* ============================================================
+     BANNERS
+  ============================================================ */
+  .info-banner {
+    display: none; margin-bottom: 20px;
+    background: #EEF0F5;
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 0.84rem; color: var(--navy);
+    line-height: 1.6;
+    align-items: flex-start; gap: 12px;
+  }
+  .info-banner.visible { display: flex; }
+  .info-banner svg { flex-shrink: 0; margin-top: 2px; }
+  .error-banner {
+    background: #FDF0EF;
+    border: 1.5px solid #E8A09A;
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    font-size: 0.9rem; color: #922B21;
+    display: flex; align-items: flex-start; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .error-banner svg { flex-shrink: 0; margin-top: 2px; }
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .empty-state svg { width: 56px; height: 56px; color: var(--slate); }
+  .empty-state h3 { font-size: 1.1rem; font-weight: 700; }
+  .empty-state p { font-size: 0.85rem; color: var(--navy-60); }
+
+  /* ============================================================
+     TOAST NOTIFICATION
+  ============================================================ */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--navy); color: var(--cream);
+    padding: 14px 26px; border-radius: var(--radius-full);
+    font-size: 0.85rem; font-weight: 700;
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; pointer-events: none; z-index: 800;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast svg { flex-shrink: 0; color: var(--success); }
+
+  /* ============================================================
+     API KEY OVERLAY
+  ============================================================ */
+  .api-overlay {
+    position: fixed; inset: 0; z-index: 600;
+    background: var(--navy-85);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .api-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    max-width: 480px; width: 100%;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  .api-card .api-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px;
+    background: var(--cream);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .api-card .api-icon svg { width: 32px; height: 32px; }
+  .api-card h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+  .api-card p { font-size: 0.85rem; color: var(--navy-60); line-height: 1.6; margin-bottom: 24px; }
+  .api-input-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .api-input {
+    width: 100%; padding: 12px 16px;
+    border: 1.5px solid var(--slate); border-radius: var(--radius-sm);
+    font-family: var(--font); font-size: 0.9rem; color: var(--navy);
+    outline: none;
+    transition: border-color var(--transition);
+  }
+  .api-input:focus { border-color: var(--navy); }
+  .api-submit {
+    padding: 12px;
+    background: var(--navy); color: var(--white);
+    border-radius: var(--radius-sm);
+    font-family: var(--font); font-size: 0.9rem; font-weight: 700;
+    letter-spacing: 0.03em;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .api-submit:hover { background: #1e2437; transform: translateY(-1px); }
+  .api-hint { font-size: 0.75rem; color: var(--navy-60); margin-top: 10px; line-height: 1.6; }
+  .api-hint a { color: var(--navy); font-weight: 700; text-decoration: underline; }
+
+  /* ============================================================
+     VIDEO WATCH PAGE
+  ============================================================ */
+  .watch-page {
+    display: none;
+    max-width: 1400px; margin: 0 auto;
+    padding: 24px 20px 64px;
+    animation: fadeSlideIn 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .watch-page.active { display: block; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Player */
+  .watch-player-wrap {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 20px;
+  }
+  .watch-player-wrap iframe {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+
+  /* Title + meta block */
+  .watch-meta-block { margin-bottom: 16px; }
+  .watch-title {
+    font-size: 1.25rem; font-weight: 800; color: var(--navy);
+    line-height: 1.35; margin-bottom: 10px;
+  }
+  .watch-stats-row {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    font-size: 0.82rem; color: var(--navy-60); font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .watch-stats-row .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); }
+
+  /* Inline Action Bar */
+  .watch-action-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 0;
+    border-top: 1px solid var(--slate);
+    border-bottom: 1px solid var(--slate);
+    margin-bottom: 18px;
+  }
+  .watch-action-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 18px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700;
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--slate);
+    transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+  }
+  .watch-action-btn:hover { border-color: var(--navy); transform: translateY(-1px); }
+  .watch-action-btn svg { width: 17px; height: 17px; }
+  .watch-action-btn.liked { background: var(--navy); color: var(--cream); border-color: var(--navy); }
+  .watch-action-btn.disliked { background: #FDF0EF; color: #922B21; border-color: #E8A09A; }
+  .watch-action-btn.copied { background: var(--success); color: #fff; border-color: var(--success); }
+
+  /* Channel row in watch page */
+  .watch-channel-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; margin-bottom: 24px;
+    border-bottom: 1px solid var(--slate);
+  }
+  .watch-ch-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    object-fit: cover; background: var(--slate); flex-shrink: 0;
+    border: 2px solid var(--cream);
+    box-shadow: 0 0 0 2px var(--slate);
+  }
+  .watch-ch-avatar-init {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.1rem; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .watch-ch-info { flex: 1; min-width: 0; }
+  .watch-ch-name {
+    font-size: 0.95rem; font-weight: 800; color: var(--navy);
+    cursor: pointer; margin-bottom: 2px;
+  }
+  .watch-ch-name:hover { text-decoration: underline; }
+  .watch-ch-subs { font-size: 0.78rem; color: var(--navy-60); font-weight: 600; }
+  .watch-subscribe-btn {
+    flex-shrink: 0;
+    background: var(--navy); color: var(--cream);
+    font-family: var(--font); font-size: 0.8rem; font-weight: 800;
+    padding: 9px 22px; border-radius: var(--radius-full);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    box-shadow: var(--shadow-sm);
+  }
+  .watch-subscribe-btn:hover { background: #1e2437; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .watch-subscribe-btn.subscribed {
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+
+  /* Recommendations feed */
+  .watch-rec-title {
+    font-size: 1rem; font-weight: 800; color: var(--navy);
+    margin-bottom: 16px; letter-spacing: -0.01em;
+  }
+  .watch-rec-list { display: flex; flex-direction: column; gap: 12px; }
+  .rec-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--white); border-radius: var(--radius-md);
+    padding: 10px; box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .rec-card:hover { box-shadow: var(--shadow-md); transform: translateX(3px); }
+  .rec-thumb {
+    flex-shrink: 0; width: 150px; aspect-ratio: 16/9;
+    border-radius: var(--radius-sm); overflow: hidden;
+    background: var(--slate); position: relative;
+  }
+  .rec-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .rec-info { flex: 1; padding: 2px 0; min-width: 0; overflow: hidden; }
+  .rec-title {
+    font-size: 0.82rem; font-weight: 700; color: var(--navy);
+    line-height: 1.4; margin-bottom: 5px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .rec-ch { font-size: 0.74rem; color: var(--navy-60); font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-meta { font-size: 0.72rem; color: var(--navy-60); }
+  .watch-back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; margin-bottom: 22px;
+    background: var(--white); border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700; color: var(--navy);
+    transition: border-color var(--transition), transform var(--transition), background var(--transition);
+  }
+  .watch-back-btn:hover { border-color: var(--navy); transform: translateX(-2px); background: var(--cream); }
+  .watch-back-btn svg { width: 16px; height: 16px; }
+
+  /* ============================================================
+     CHANNEL PAGE
+  ============================================================ */
+  .channel-page {
+    display: none;
+    max-width: 1400px; margin: 0 auto;
+    padding: 24px 20px 64px;
+  }
+  .channel-page.active {
+    display: block;
+    animation: fadeSlideIn 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; margin-bottom: 22px;
+    background: var(--white); border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700; color: var(--navy);
+    transition: border-color var(--transition), transform var(--transition), background var(--transition);
+  }
+  .back-btn:hover { border-color: var(--navy); transform: translateX(-2px); background: var(--cream); }
+  .back-btn svg { width: 16px; height: 16px; }
+
+  .ch-profile-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+  }
+
+  .ch-banner-wrap {
+    width: 100%;
+    aspect-ratio: 4/1;
+    background: linear-gradient(135deg, var(--navy) 0%, #4a5680 100%);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ch-banner-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+  }
+  .ch-banner-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--navy) 0%, #4a5680 60%, #6372a0 100%);
+  }
+
+  .ch-identity-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 24px 0;
+  }
+
+  .ch-avatar-wrap {
+    flex-shrink: 0;
+    margin-top: -40px;
+    position: relative;
+    z-index: 2;
+  }
+  .ch-avatar-img {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    box-shadow: 0 0 0 3px var(--navy), var(--shadow-md);
+    object-fit: cover;
+    background: var(--slate);
+    display: block;
+  }
+  .ch-avatar-init {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    box-shadow: 0 0 0 3px var(--navy), var(--shadow-md);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 2rem; font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .ch-identity-info {
+    flex: 1;
+    min-width: 0;
+    padding-top: 6px;
+  }
+  .ch-title {
+    font-size: 1.45rem; font-weight: 800;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 5px;
+    word-break: break-word;
+  }
+  .ch-handle {
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--navy-60);
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+  .ch-stats-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    font-size: 0.82rem; font-weight: 600; color: var(--navy-60);
+    margin-bottom: 12px;
+  }
+  .ch-stats-row .dot {
+    width: 3px; height: 3px;
+    border-radius: 50%; background: var(--slate); flex-shrink: 0;
+  }
+  .ch-stats-row span { white-space: nowrap; }
+
+  .ch-subscribe-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 8px;
+    background: var(--navy); color: var(--cream);
+    font-family: var(--font); font-size: 0.8rem; font-weight: 800;
+    padding: 10px 24px; border-radius: var(--radius-full);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+  }
+  .ch-subscribe-btn:hover { background: #1e2437; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .ch-subscribe-btn.subscribed {
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+
+  .ch-desc {
+    font-size: 0.85rem; color: var(--navy-60);
+    line-height: 1.7;
+    padding: 14px 24px 20px;
+    max-width: 820px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ch-tabs-bar {
+    display: flex; gap: 0;
+    border-top: 1.5px solid var(--slate);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ch-tabs-bar::-webkit-scrollbar { display: none; }
+  .ch-tab-btn {
+    padding: 14px 28px;
+    font-family: var(--font); font-size: 0.875rem; font-weight: 700;
+    color: var(--navy-60);
+    border-bottom: 2.5px solid transparent;
+    position: relative; bottom: -1.5px;
+    white-space: nowrap;
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+    letter-spacing: 0.01em;
+  }
+  .ch-tab-btn:hover { color: var(--navy); background: var(--cream); }
+  .ch-tab-btn.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+    background: var(--cream);
+  }
+
+  .channel-content-area { min-height: 200px; }
+
+  /* Playlist card */
+  .playlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .playlist-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .playlist-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .playlist-thumb-wrap {
+    position: relative; aspect-ratio: 16/9;
+    background: var(--slate);
+  }
+  .playlist-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .playlist-count-badge {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 36%;
+    background: rgba(49,56,81,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 1.1rem;
+  }
+  .playlist-count-badge span:last-child { font-size: 0.65rem; font-weight: 600; opacity: 0.8; margin-top: 2px; }
+  .playlist-body { padding: 12px 14px; }
+  .playlist-title {
+    font-size: 0.875rem; font-weight: 700; color: var(--navy);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; line-height: 1.4;
+  }
+  .playlist-meta { font-size: 0.74rem; color: var(--navy-60); margin-top: 4px; font-weight: 600; }
+
+  /* ============================================================
+     UTILITY
+  ============================================================ */
+  .hidden { display: none !important; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ============================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 768px) {
+    .header-inner { padding: 0 12px; gap: 10px; }
+    .logo-text { display: none; }
+    .main { padding: 20px 12px; }
+    .videos-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+    .shorts-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .result-thumb { width: 120px; }
+    .result-title { font-size: 0.85rem; }
+    .api-card { padding: 28px 20px; }
+    .section-title-row { gap: 10px; }
+    .refresh-btn span.refresh-label { display: none; }
+    .refresh-btn { padding: 10px; }
+    .watch-title { font-size: 1rem; }
+    .watch-channel-row { flex-wrap: wrap; gap: 10px; }
+    .rec-thumb { width: 110px; }
+    .channel-page { padding: 16px 12px 48px; }
+    .ch-banner-wrap { aspect-ratio: 3/1; }
+    .ch-identity-row { flex-direction: column; gap: 12px; padding: 16px 16px 0; align-items: flex-start; }
+    .ch-avatar-wrap { margin-top: -36px; }
+    .ch-avatar-img, .ch-avatar-init { width: 72px; height: 72px; font-size: 1.6rem; }
+    .ch-title { font-size: 1.15rem; }
+    .ch-identity-info { padding-top: 4px; }
+    .ch-desc { padding: 12px 16px 18px; font-size: 0.82rem; }
+    .ch-tab-btn { padding: 12px 18px; font-size: 0.8rem; }
+    .ch-subscribe-btn { padding: 9px 18px; font-size: 0.75rem; }
+    .watch-page { padding: 16px 12px 48px; }
+    .watch-player-wrap { border-radius: var(--radius-md); }
+    .category-bar { padding: 8px 12px; }
+    .category-bar-wrap { top: 64px; }
+  }
+
+  @media (max-width: 480px) {
+    .ch-identity-row { gap: 10px; }
+    .ch-subscribe-btn { width: 100%; text-align: center; justify-content: center; margin-top: 4px; }
+    .ch-stats-row { gap: 6px; font-size: 0.76rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     API KEY OVERLAY
+============================================================ -->
+<div class="api-overlay" id="apiOverlay">
+  <div class="api-card">
+    <div class="api-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#313851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h2>API Key Required</h2>
+    <p>ViewTube connects directly to the YouTube Data API v3 in real-time. Enter your Google Cloud Console API Key to continue.</p>
+    <div class="api-input-wrap">
+      <input type="text" class="api-input" id="apiKeyInput" placeholder="Paste your YouTube Data API v3 key…" />
+      <button class="api-submit" id="apiSubmitBtn">Launch ViewTube →</button>
+    </div>
+    <p class="api-hint">
+      Get a free key at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> → Enable "YouTube Data API v3" → Create Credentials → API Key.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo" id="logoHome">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 3l14 9-14 9V3z" fill="#F6F3ED"/>
+        </svg>
+      </div>
+      <span class="logo-text">ViewTube</span>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search videos, channels, shorts…" />
+      <button class="search-btn" id="searchBtn" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <nav class="tabs-nav" role="tablist" id="tabsNav">
+    <button class="tab-btn active" data-tab="home" role="tab">🏠 Home</button>
+    <button class="tab-btn" data-tab="shorts" role="tab">⚡ Shorts</button>
+  </nav>
+</header>
+
+<!-- ============================================================
+     CATEGORY TAGS BAR
+============================================================ -->
+<div class="category-bar-wrap" id="categoryBarWrap">
+  <div class="category-bar" id="categoryBar"></div>
+</div>
+
+<!-- ============================================================
+     MAIN FEED
+============================================================ -->
+<div class="main" id="mainArea">
+  <div class="info-banner" id="localBanner">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#313851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>You are opening this file directly. For API calls to work properly, serve this file via a local dev server (e.g. <strong>npx serve .</strong>) or host it on <strong>Vercel</strong> / <strong>Netlify</strong>.</span>
+  </div>
+
+  <!-- HOME TAB -->
+  <div class="tab-content active" id="tab-home">
+    <div id="homeContent"></div>
+  </div>
+
+  <!-- SHORTS TAB -->
+  <div class="tab-content" id="tab-shorts">
+    <div id="shortsContent"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIDEO WATCH PAGE
+============================================================ -->
+<div class="watch-page" id="watchPage">
+  <button class="watch-back-btn" id="watchBackBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Back
+  </button>
+  <div class="watch-player-wrap" id="watchPlayerWrap"></div>
+  <div class="watch-meta-block" id="watchMetaBlock">
+    <div class="watch-title" id="watchTitle"></div>
+    <div class="watch-stats-row" id="watchStatsRow"></div>
+    <div class="watch-action-bar" id="watchActionBar">
+      <button class="watch-action-btn" id="watchLikeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3H14z"/>
+          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+        </svg>
+        <span id="watchLikeCount">Like</span>
+      </button>
+      <button class="watch-action-btn" id="watchDislikeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.7a2 2 0 0 0-2 1.7l-1.4 9a2 2 0 0 0 2 2.3H10z"/>
+          <path d="M17 2h2.3A2 2 0 0 1 21 4v7a2 2 0 0 1-2 2h-2"/>
+        </svg>
+        Dislike
+      </button>
+      <button class="watch-action-btn" id="watchShareBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+        </svg>
+        Share
+      </button>
+      <button class="watch-action-btn" id="watchCopyBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy Link
+      </button>
+    </div>
+  </div>
+  <div class="watch-channel-row" id="watchChannelRow"></div>
+  <div class="watch-rec-title">Up Next</div>
+  <div class="watch-rec-list" id="watchRecList"></div>
+</div>
+
+<!-- ============================================================
+     CHANNEL PAGE
+============================================================ -->
+<div class="channel-page" id="channelPage">
+  <button class="back-btn" id="channelBackBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Back
+  </button>
+  <div id="channelPageContent"></div>
+</div>
+
+<!-- ============================================================
+     TOAST
+============================================================ -->
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG
+============================================================ */
+let API_KEY = 'YOUR_API_KEY_HERE';
+const BASE = 'https://www.googleapis.com/youtube/v3';
+
+/* ============================================================
+   STATE
+
+   viewMode: 'home' | 'category' | 'search' | 'shorts' | 'channel'
+   globalNextPageToken: single shared token for infinite scroll
+   scrollFetching: guard to prevent concurrent scroll fetches
+============================================================ */
+let activeTab       = 'home';
+let homeLoaded      = false;
+let shortsLoaded    = false;
+let activeCategory  = 'All';
+let viewMode        = 'home';   // tracks what infinite scroll should fetch next
+let globalNextPageToken = null; // FIX 2: single global token for infinite scroll
+let scrollFetching  = false;    // FIX 2: debounce guard
+let toastTimer      = null;
+
+// Randomised home feed state (FIX 1)
+let homePageOffset  = 0; // used to randomise offset on each refresh
+
+// Search state
+let lastSearchQuery = '';
+
+// Channel page state (FIX 4)
+let activeChannelId  = null;
+let activeChTab      = 'home';
+let channelScrollCtx = null; // { channelId, tab } — so scroll knows what to load
+
+// Watch page state
+let watchVideoId   = null;
+let watchLiked     = false;
+let watchDisliked  = false;
+// FIX 4: dedicated pagination state for the Watch Page's related-videos feed
+let watchPageNextToken = null; // separate token namespace from globalNextPageToken
+let watchRecMode    = 'related'; // 'related' | 'query' — which endpoint strategy is paginating
+let watchRecQuery   = '';        // fallback search query used when 'related' mode isn't available
+let preWatchToken   = null;      // snapshot of globalNextPageToken before entering watch page
+let preWatchMode    = null;      // snapshot of viewMode before entering watch page
+
+// View stack
+let viewStack = 'main';
+
+const CATEGORIES = ['All','Website','Music','APIs','Gaming','Hyped','Server','Movies','Tech'];
+
+// FIX 1: India-only random query pool for refresh randomisation
+const INDIA_RANDOM_QUERIES = [
+  'viral india','bollywood','cricket india','trending india',
+  'indian music','web series hindi','desi comedy','india vlog',
+  'indian street food','tollywood','kollywood','punjabi music',
+  'indian tech','stand up comedy india','india travel'
+];
+
+/* ============================================================
+   DOM REFS
+============================================================ */
+const apiOverlay      = document.getElementById('apiOverlay');
+const apiKeyInput     = document.getElementById('apiKeyInput');
+const apiSubmitBtn    = document.getElementById('apiSubmitBtn');
+const localBanner     = document.getElementById('localBanner');
+const searchInput     = document.getElementById('searchInput');
+const searchBtn       = document.getElementById('searchBtn');
+const tabBtns         = document.querySelectorAll('.tab-btn');
+const tabsNav         = document.getElementById('tabsNav');
+const categoryBarWrap = document.getElementById('categoryBarWrap');
+const categoryBar     = document.getElementById('categoryBar');
+const mainArea        = document.getElementById('mainArea');
+const homeContent     = document.getElementById('homeContent');
+const shortsContent   = document.getElementById('shortsContent');
+const toastEl         = document.getElementById('toast');
+const logoHome        = document.getElementById('logoHome');
+
+// Watch page
+const watchPage       = document.getElementById('watchPage');
+const watchBackBtn    = document.getElementById('watchBackBtn');
+const watchPlayerWrap = document.getElementById('watchPlayerWrap');
+const watchTitle      = document.getElementById('watchTitle');
+const watchStatsRow   = document.getElementById('watchStatsRow');
+const watchActionBar  = document.getElementById('watchActionBar');
+const watchLikeBtn    = document.getElementById('watchLikeBtn');
+const watchLikeCount  = document.getElementById('watchLikeCount');
+const watchDislikeBtn = document.getElementById('watchDislikeBtn');
+const watchShareBtn   = document.getElementById('watchShareBtn');
+const watchCopyBtn    = document.getElementById('watchCopyBtn');
+const watchChannelRow = document.getElementById('watchChannelRow');
+const watchRecList    = document.getElementById('watchRecList');
+
+// Channel page
+const channelPage        = document.getElementById('channelPage');
+const channelPageContent = document.getElementById('channelPageContent');
+const channelBackBtn     = document.getElementById('channelBackBtn');
+
+/* ============================================================
+   API KEY GATE
+============================================================ */
+function isKeyValid(k) { return k && k.trim() && k.trim() !== 'YOUR_API_KEY_HERE'; }
+
+function checkApiKey() {
+  if (isKeyValid(API_KEY)) { apiOverlay.style.display = 'none'; init(); }
+  else { apiOverlay.style.display = 'flex'; }
+}
+apiSubmitBtn.addEventListener('click', () => {
+  const v = apiKeyInput.value.trim();
+  if (!v) { apiKeyInput.style.borderColor = '#C0392B'; return; }
+  apiKeyInput.style.borderColor = '';
+  API_KEY = v;
+  apiOverlay.style.display = 'none';
+  init();
+});
+apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') apiSubmitBtn.click(); });
+
+/* ============================================================
+   LOCAL FILE WARNING
+============================================================ */
+function detectLocalFile() {
+  if (location.protocol === 'file:' || location.protocol === 'blob:') {
+    localBanner.classList.add('visible');
+  }
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function formatViews(n) {
+  if (!n) return '';
+  n = parseInt(n, 10);
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B views';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M views';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K views';
+  return n+' views';
+}
+function formatCount(n) {
+  if (n === undefined || n === null || n === '') return '';
+  n = parseInt(n, 10);
+  if (isNaN(n)) return '';
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return String(n);
+}
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60)+'m ago';
+  if (diff < 86400) return Math.floor(diff/3600)+'h ago';
+  if (diff < 2592000) return Math.floor(diff/86400)+'d ago';
+  if (diff < 31104000) return Math.floor(diff/2592000)+'mo ago';
+  return Math.floor(diff/31104000)+'y ago';
+}
+function thumb(item) {
+  const t = item?.snippet?.thumbnails;
+  return (t?.maxres || t?.high || t?.medium || t?.default)?.url || '';
+}
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function avatarColor(name) {
+  const str = name || '?'; let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) % 360;
+  return `hsl(${Math.abs(hash)},42%,38%)`;
+}
+function shuffle(arr) {
+  // Fisher-Yates in-place shuffle, returns arr
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+async function apiFetch(url) {
+  const sep = url.includes('?') ? '&' : '?';
+  let res;
+  try {
+    res = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY));
+  } catch (networkErr) {
+    // FIX 2: network failure (offline, CORS, DNS, etc.) never throws raw to caller unhandled
+    const e = new Error('Network error — please check your connection.');
+    e.status = 0;
+    e.isQuota = false;
+    throw e;
+  }
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    let reason = '';
+    try {
+      const j = await res.json();
+      msg = j?.error?.message || msg;
+      reason = j?.error?.errors?.[0]?.reason || '';
+    } catch(_) {}
+    const e = new Error(msg);
+    e.status = res.status;
+    // FIX 2: flag quota-exceeded explicitly so UI can show the dedicated banner
+    e.isQuota = res.status === 403 || reason === 'quotaExceeded' || reason === 'dailyLimitExceeded';
+    throw e;
+  }
+  // FIX 2: guarantee callers always get a safely-shaped object, never undefined
+  let json;
+  try { json = await res.json(); } catch(_) { json = {}; }
+  if (!json || typeof json !== 'object') json = {};
+  if (!Array.isArray(json.items)) json.items = json.items || [];
+  return json;
+}
+
+/* ============================================================
+   SKELETON / ERROR / EMPTY
+============================================================ */
+function buildVideoSkeletons(count = 12) {
+  return Array.from({length: count}, () => `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-thumb"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton-line w80"></div>
+        <div class="skeleton skeleton-line w60"></div>
+        <div class="skeleton skeleton-line w40"></div>
+      </div>
+    </div>`).join('');
+}
+function buildShortSkeletons(count = 16) {
+  return Array.from({length:count}, () => `<div class="skeleton skeleton-short"></div>`).join('');
+}
+function buildRecSkeletons(count = 8) {
+  return Array.from({length:count}, () => `
+    <div class="rec-card">
+      <div class="rec-thumb skeleton" style="width:150px;aspect-ratio:16/9;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding:4px 0;">
+        <div class="skeleton skeleton-line w80" style="height:11px;"></div>
+        <div class="skeleton skeleton-line w60" style="height:11px;"></div>
+        <div class="skeleton skeleton-line w40" style="height:11px;"></div>
+      </div>
+    </div>`).join('');
+}
+function errorHtml(msg) {
+  return `<div class="error-banner">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span><strong>Could not load content.</strong> ${escapeHtml(msg)}. Check your API key, quota, or network.</span>
+  </div>`;
+}
+// FIX 2: dedicated premium "quota exceeded" banner — never leave a blank/broken screen on 403
+function quotaErrorHtml() {
+  return `<div class="error-banner">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span><strong>Daily API Limit Reached.</strong> Please update your Google Cloud Console API Key or try again later.</span>
+  </div>`;
+}
+// FIX 2: routes any caught error to the right banner — quota-specific vs generic
+function errorOrQuotaHtml(err) {
+  return (err && err.isQuota) ? quotaErrorHtml() : errorHtml(err?.message || 'Unknown error');
+}
+// FIX 2: routes any caught error to the right toast message during append/scroll fetches
+function errorOrQuotaToast(err) {
+  showToast(err && err.isQuota ? 'Daily API Limit Reached. Update your API key.' : 'Could not load more content.');
+}
+function emptyHtml(msg = 'Nothing found.') {
+  return `<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <h3>${escapeHtml(msg)}</h3>
+    <p>Try a different search term or check back later.</p>
+  </div>`;
+}
+function spinnerHtml() {
+  return `<div class="scroll-spinner" id="scrollSpinner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    Loading more…
+  </div>`;
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+function showToast(msg) {
+  toastEl.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg><span>${escapeHtml(msg)}</span>`;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+
+/* ============================================================
+   SHARE SYSTEM
+============================================================ */
+function fallbackCopyLink(url) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => showToast('Link Copied!')).catch(() => legacyCopy(url));
+  } else { legacyCopy(url); }
+}
+function legacyCopy(url) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); ta.remove(); showToast('Link Copied!');
+  } catch(_) { showToast('Could not copy link.'); }
+}
+async function shareVideo(videoId, title) {
+  if (!videoId) return;
+  const url = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: title || 'Check this out', text: title || '', url }); }
+    catch (err) { if (err?.name !== 'AbortError') fallbackCopyLink(url); }
+  } else { fallbackCopyLink(url); }
+}
+
+/* ============================================================
+   SVG HELPERS
+============================================================ */
+function shareBtnSvg() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+    <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+  </svg>`;
+}
+
+/* ============================================================
+   CARD BUILDERS
+============================================================ */
+
+/**
+ * buildVideoCard — canonical grid card for mostPopular API items
+ * (id is a plain string, statistics available)
+ */
+function buildVideoCard(video, videoId) {
+  const s = video.snippet || {}, st = video.statistics || {};
+  const title = escapeHtml(s.title || 'Untitled');
+  const channel = escapeHtml(s.channelTitle || '');
+  const channelId = s.channelId || '';
+  const views = formatViews(st.viewCount);
+  const date = timeAgo(s.publishedAt);
+  const imgSrc = thumb(video);
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
+  return `
+    <div class="video-card" data-videoid="${videoId}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="thumb-wrap">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="rgba(49,56,81,0.85)"/>
+            <polygon points="10,8 18,12 10,16" fill="#F6F3ED"/>
+          </svg>
+        </div>
+        <button class="share-btn" data-videoid="${videoId}" data-title="${title}" aria-label="Share video" title="Share">${shareBtnSvg()}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title}</div>
+        <div class="card-channel-row" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span class="card-channel">${channel}</span>
+        </div>
+        <div class="card-meta">
+          <div class="card-stats">
+            ${views ? `<span>${views}</span>` : ''}
+            ${views && date ? `<span class="dot"></span>` : ''}
+            ${date ? `<span>${date}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * buildSearchVideoCard — identical template for search API items
+ * (id lives at item.id.videoId, no statistics)
+ */
+function buildSearchVideoCard(item) {
+  const videoId = item.id?.videoId || item.id || '';
+  const s = item.snippet || {};
+  const title = escapeHtml(s.title || 'Untitled');
+  const channel = escapeHtml(s.channelTitle || '');
+  const channelId = s.channelId || '';
+  const date = timeAgo(s.publishedAt);
+  const imgSrc = thumb(item);
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
+  return `
+    <div class="video-card" data-videoid="${videoId}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="thumb-wrap">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="rgba(49,56,81,0.85)"/>
+            <polygon points="10,8 18,12 10,16" fill="#F6F3ED"/>
+          </svg>
+        </div>
+        <button class="share-btn" data-videoid="${videoId}" data-title="${title}" aria-label="Share video" title="Share">${shareBtnSvg()}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title}</div>
+        <div class="card-channel-row" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span class="card-channel">${channel}</span>
+        </div>
+        <div class="card-meta">
+          <div class="card-stats">
+            ${date ? `<span>${date}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildShortCard(item) {
+  const s = item.snippet||{}, id = item.id?.videoId||item.id||'';
+  const title = escapeHtml(s.title||'Short'), channel = escapeHtml(s.channelTitle||'');
+  const channelId = s.channelId||'', imgSrc = thumb(item);
+  const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
+  return `
+    <div class="short-card" data-videoid="${id}" data-title="${title}" tabindex="0" role="button" aria-label="Play short: ${title}">
+      <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+      <div class="short-badge">⚡ SHORT</div>
+      <button class="share-btn share-btn-short" data-videoid="${id}" data-title="${title}" aria-label="Share short" title="Share">${shareBtnSvg()}</button>
+      <div class="short-play">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="rgba(246,243,237,0.9)"/>
+          <polygon points="10,8 18,12 10,16" fill="#313851"/>
+        </svg>
+      </div>
+      <div class="short-overlay">
+        <div class="short-title">${title}</div>
+        ${channel ? `<div class="short-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini sm" style="background:${avatarColor(channel)}">${initial}</span>
+          <span>${channel}</span>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function buildChannelCard(item) {
+  const s = item.snippet||{};
+  const channelId = item.id?.channelId||s.channelId||(typeof item.id==='string'?item.id:'');
+  const name = escapeHtml(s.title||s.channelTitle||'Channel');
+  const desc = escapeHtml(s.description||''), img = thumb(item);
+  return `
+    <div class="channel-card" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${name}">
+      <img class="channel-avatar" src="${img}" alt="${name}" loading="lazy"
+        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2272%22><rect width=%2272%22 height=%2272%22 fill=%22%23C2CBD3%22/></svg>'" />
+      <div class="channel-name">${name}</div>
+      ${desc ? `<div class="channel-desc">${desc}</div>` : ''}
+      <button class="subscribe-btn">Subscribe</button>
+    </div>`;
+}
+
+function buildResultRow(item) {
+  const s = item.snippet||{}, id = item.id?.videoId||item.id||'';
+  const kind = item.id?.kind||'';
+  if (kind === 'youtube#channel') return buildChannelCard(item);
+  const title = escapeHtml(s.title||'Untitled'), channel = escapeHtml(s.channelTitle||s.title||'');
+  const channelId = s.channelId||'', desc = escapeHtml(s.description||'');
+  const date = timeAgo(s.publishedAt), imgSrc = thumb(item);
+  const initial = (channel||'?').trim().charAt(0).toUpperCase()||'?';
+  return `
+    <div class="result-row" data-videoid="${id}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="result-thumb">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <button class="share-btn share-btn-row" data-videoid="${id}" data-title="${title}" aria-label="Share video" title="Share">${shareBtnSvg()}</button>
+      </div>
+      <div class="result-info">
+        <div class="result-title">${title}</div>
+        <div class="result-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span>${channel}</span>
+        </div>
+        <div class="result-meta">${date}</div>
+        ${desc ? `<div class="result-desc">${desc}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function buildRecCard(item) {
+  const s = item.snippet||{}, id = item.id?.videoId||item.id||'';
+  const title = escapeHtml(s.title||''), channel = escapeHtml(s.channelTitle||'');
+  const channelId = s.channelId||'', date = timeAgo(s.publishedAt), imgSrc = thumb(item);
+  return `
+    <div class="rec-card" data-videoid="${id}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="rec-thumb">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+      </div>
+      <div class="rec-info">
+        <div class="rec-title">${title}</div>
+        <div class="rec-ch" data-channelid="${channelId}" role="button">${channel}</div>
+        <div class="rec-meta">${date}</div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   EVENT DELEGATION — CARD INTERACTIONS
+============================================================ */
+function attachCardInteractions(root) {
+  root.querySelectorAll('[data-videoid]').forEach(el => {
+    if (el.dataset.boundVideo) return;
+    el.dataset.boundVideo = '1';
+    el.addEventListener('click', () => {
+      const vid = el.dataset.videoid, title = el.dataset.title||'';
+      if (vid) openWatchPage(vid, title);
+    });
+    el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); el.click(); }});
+  });
+
+  root.querySelectorAll('[data-channelid]').forEach(el => {
+    if (el.dataset.boundChannel) return;
+    el.dataset.boundChannel = '1';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const cid = el.dataset.channelid;
+      if (cid) openChannelPage(cid);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key==='Enter'||e.key===' ') {
+        e.preventDefault(); e.stopPropagation();
+        const cid = el.dataset.channelid;
+        if (cid) openChannelPage(cid);
+      }
+    });
+  });
+
+  root.querySelectorAll('.share-btn').forEach(el => {
+    if (el.dataset.boundShare) return;
+    el.dataset.boundShare = '1';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      shareVideo(el.dataset.videoid, el.dataset.title);
+    });
+  });
+
+  root.querySelectorAll('.subscribe-btn').forEach(el => {
+    if (el.dataset.boundSub) return;
+    el.dataset.boundSub = '1';
+    el.addEventListener('click', e => e.stopPropagation());
+  });
+}
+
+/* ============================================================
+   VIEW MANAGER
+============================================================ */
+function showView(view) {
+  viewStack = view;
+  mainArea.style.display        = view === 'main'    ? '' : 'none';
+  categoryBarWrap.style.display = view === 'main'    ? '' : 'none';
+  tabsNav.style.display         = view === 'main'    ? '' : 'none';
+  watchPage.classList.toggle('active',   view === 'watch');
+  channelPage.classList.toggle('active', view === 'channel');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   CATEGORY TAGS BAR
+============================================================ */
+function renderCategoryBar() {
+  categoryBar.innerHTML = CATEGORIES.map(cat => `
+    <button class="category-pill${cat === activeCategory ? ' active' : ''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>
+  `).join('');
+
+  categoryBar.querySelectorAll('.category-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const cat = pill.dataset.cat;
+      if (cat === activeCategory) return;
+      activeCategory = cat;
+      renderCategoryBar();
+      loadCategoryFeed(cat);
+    });
+  });
+}
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 2: GLOBAL INFINITE SCROLL ENGINE                   ║
+   ╚══════════════════════════════════════════════════════════╝
+   A single window scroll listener routes to the correct
+   fetch handler based on `viewMode`. It uses `globalNextPageToken`
+   and the `scrollFetching` guard to prevent duplicate calls.
+============================================================ */
+function showScrollSpinner(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  // Remove existing spinner if any
+  const old = document.getElementById('scrollSpinner');
+  if (old) old.remove();
+  grid.insertAdjacentHTML('afterend', spinnerHtml());
+}
+function hideScrollSpinner() {
+  const el = document.getElementById('scrollSpinner');
+  if (el) el.remove();
+}
+
+async function infiniteScrollFetch() {
+  if (scrollFetching || !globalNextPageToken) return;
+  scrollFetching = true; // isLoading guard — blocks any other fetch until this resolves
+
+  switch (viewMode) {
+    case 'home':
+      await appendHomeFeed();
+      break;
+    case 'category':
+      await appendCategoryFeed();
+      break;
+    case 'search':
+      await appendSearchFeed();
+      break;
+    case 'shorts':
+      await appendShortsFeed();
+      break;
+    case 'channel':
+      await appendChannelFeed();
+      break;
+    case 'watch':
+      // FIX 4: infinite scroll for Video Watch Page recommendations
+      await appendWatchFeed();
+      break;
+  }
+
+  scrollFetching = false;
+}
+
+// FIX 1: a single, structured global scroll listener — there is only ever ONE
+// of these attached for the lifetime of the page. Every view transition
+// (tab switch, category click, refresh, watch/channel open) only ever
+// mutates `viewMode` / `viewStack` / `globalNextPageToken`; it never adds
+// another listener, so duplicate parallel scroll-fetches are impossible.
+const VIEW_MODE_BY_STACK = {
+  main:    ['home', 'category', 'search', 'shorts'],
+  channel: ['channel'],
+  watch:   ['watch']
+};
+window.addEventListener('scroll', () => {
+  const allowedModes = VIEW_MODE_BY_STACK[viewStack];
+  if (!allowedModes || !allowedModes.includes(viewMode)) return;
+  if (!globalNextPageToken || scrollFetching) return;
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+    infiniteScrollFetch();
+  }
+}, { passive: true });
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 1: HOME FEED — India-only, randomised on refresh   ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Always uses regionCode=IN
+   - On initial load: fetches mostPopular, shuffles the items array
+   - On Refresh: uses a random query from INDIA_RANDOM_QUERIES
+     for a completely fresh, unexpected batch every time
+   - No country badges anywhere
+============================================================ */
+let homeIsRandomQuery = false; // tracks if current home feed is query-based
+let homeCurrentQuery  = '';    // used for append when query-based
+
+async function loadHome(opts = {}) {
+  const append = !!opts.append;
+  viewMode = 'home';
+
+  if (!append) {
+    globalNextPageToken = null;
+    homeIsRandomQuery = false;
+    homeCurrentQuery  = '';
+    homeContent.innerHTML = `
+      <div class="section-title-row">
+        <div class="section-title">🔥 Trending</div>
+        <button class="refresh-btn" id="refreshFeedBtn" title="Refresh feed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span class="refresh-label">Refresh Feed</span>
+        </button>
+      </div>
+      <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
+    document.getElementById('refreshFeedBtn').addEventListener('click', refreshFeed);
+  }
+
+  const grid = document.getElementById('homeGrid');
+  try {
+    let url = `${BASE}/videos?part=snippet,statistics&chart=mostPopular&regionCode=IN&maxResults=20`;
+    if (append && globalNextPageToken) {
+      if (homeIsRandomQuery) {
+        // append mode for a random query — use search endpoint
+        url = `${BASE}/search?part=snippet&maxResults=20&q=${encodeURIComponent(homeCurrentQuery)}&type=video&regionCode=IN`;
+        if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+      } else {
+        if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+      }
+    }
+
+    const data = await apiFetch(url);
+    let items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+
+    if (!items.length && !append) {
+      grid.innerHTML = emptyHtml('No trending videos found.');
+      return;
+    }
+
+    // FIX 1: shuffle on first load for variety
+    if (!append) shuffle(items);
+
+    let cards;
+    if (homeIsRandomQuery) {
+      cards = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId)
+                   .map(v => buildSearchVideoCard(v)).join('');
+    } else {
+      cards = items.map(v => buildVideoCard(v, v.id)).join('');
+    }
+
+    if (append) { hideScrollSpinner(); grid.insertAdjacentHTML('beforeend', cards); }
+    else grid.innerHTML = cards;
+
+    attachCardInteractions(homeContent);
+    homeLoaded = true;
+  } catch(err) {
+    hideScrollSpinner();
+    if (append) errorOrQuotaToast(err);
+    else homeContent.innerHTML = errorOrQuotaHtml(err);
+  }
+}
+
+async function appendHomeFeed() {
+  const grid = document.getElementById('homeGrid');
+  if (!grid) return;
+  showScrollSpinner('homeGrid');
+  await loadHome({ append: true });
+}
+
+// FIX 1: Refresh randomly — picks from India query pool for a fresh batch
+function refreshFeed() {
+  const btn = document.getElementById('refreshFeedBtn');
+  if (btn) btn.classList.add('spinning');
+
+  activeCategory = 'All';
+  renderCategoryBar();
+  viewMode = 'home';
+  globalNextPageToken = null;
+  scrollFetching = false;
+
+  // Pick a random Indian query for a completely fresh batch
+  const randomQ = randomChoice(INDIA_RANDOM_QUERIES);
+  homeIsRandomQuery = true;
+  homeCurrentQuery  = randomQ;
+
+  homeContent.innerHTML = `
+    <div class="section-title-row">
+      <div class="section-title">🔥 Trending</div>
+      <button class="refresh-btn spinning" id="refreshFeedBtn" title="Refresh feed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span class="refresh-label">Refresh Feed</span>
+      </button>
+    </div>
+    <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
+  document.getElementById('refreshFeedBtn').addEventListener('click', refreshFeed);
+
+  const grid = document.getElementById('homeGrid');
+  apiFetch(`${BASE}/search?part=snippet&maxResults=20&q=${encodeURIComponent(randomQ)}&type=video&regionCode=IN`)
+    .then(data => {
+      const items = data.items || [];
+      globalNextPageToken = data.nextPageToken || null;
+      shuffle(items);
+      if (!items.length) { grid.innerHTML = emptyHtml('No videos found.'); return; }
+      const cards = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId)
+                         .map(v => buildSearchVideoCard(v)).join('');
+      grid.innerHTML = cards;
+      attachCardInteractions(homeContent);
+      homeLoaded = true;
+    })
+    .catch(err => { grid.innerHTML = errorOrQuotaHtml(err); })
+    .finally(() => {
+      const b = document.getElementById('refreshFeedBtn');
+      if (b) setTimeout(() => b.classList.remove('spinning'), 100);
+    });
+}
+
+/* ============================================================
+   SHORTS LOADER
+============================================================ */
+async function loadShorts(opts = {}) {
+  const append = !!opts.append;
+  viewMode = 'shorts';
+
+  if (!append) {
+    globalNextPageToken = null;
+    shortsContent.innerHTML = `
+      <div class="section-title-row"><div class="section-title">⚡ Shorts</div></div>
+      <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>`;
+  }
+  const grid = document.getElementById('shortsGrid');
+  try {
+    let url = `${BASE}/search?part=snippet&maxResults=20&q=shorts&type=video&videoDuration=short&regionCode=IN`;
+    if (append && globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); return; }
+    const cards = items.map(buildShortCard).join('');
+    if (append) { hideScrollSpinner(); grid.insertAdjacentHTML('beforeend', cards); }
+    else grid.innerHTML = cards;
+    attachCardInteractions(shortsContent);
+    shortsLoaded = true;
+  } catch(err) {
+    hideScrollSpinner();
+    if (append) errorOrQuotaToast(err);
+    else shortsContent.innerHTML = errorOrQuotaHtml(err);
+  }
+}
+
+async function appendShortsFeed() {
+  const grid = document.getElementById('shortsGrid');
+  if (!grid) return;
+  showScrollSpinner('shortsGrid');
+  await loadShorts({ append: true });
+}
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 3: CATEGORY FEED — infinite scroll ready           ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Uses YouTube Search endpoint with regionCode=IN
+   - Resets globalNextPageToken, wipes grid once
+   - Passes returned token to the global infinite scroll listener
+   - Appended cards use identical .video-card template (buildSearchVideoCard)
+============================================================ */
+let activeCategoryName = '';
+
+async function loadCategoryFeed(cat) {
+  // Snap to home tab
+  tabBtns.forEach(b => b.classList.remove('active'));
+  tabBtns[0].classList.add('active');
+  activeTab = 'home';
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-home').classList.add('active');
+
+  if (cat === 'All') {
+    homeLoaded = false;
+    globalNextPageToken = null;
+    scrollFetching = false;
+    viewMode = 'home';
+    homeIsRandomQuery = false;
+    homeCurrentQuery = '';
+    loadHome();
+    return;
+  }
+
+  // FIX 3: set global view mode + reset token
+  viewMode = 'category';
+  activeCategoryName = cat;
+  globalNextPageToken = null;
+  scrollFetching = false;
+
+  homeContent.innerHTML = `
+    <div class="section-title-row">
+      <div class="section-title">🏷️ ${escapeHtml(cat)} <span>Loading…</span></div>
+    </div>
+    <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
+
+  const q = encodeURIComponent(cat);
+  try {
+    // FIX 3: use regionCode=IN on category search
+    const data = await apiFetch(`${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video&regionCode=IN`);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+
+    if (!items.length) {
+      homeContent.innerHTML = emptyHtml(`No results for "${cat}"`);
+      return;
+    }
+
+    const grid = document.getElementById('homeGrid');
+    const titleEl = homeContent.querySelector('.section-title');
+    if (titleEl) titleEl.innerHTML = `🏷️ ${escapeHtml(cat)} <span>${items.length} videos</span>`;
+
+    const videoItems = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId);
+    // FIX 3: identical .video-card layout via buildSearchVideoCard
+    grid.innerHTML = videoItems.map(v => buildSearchVideoCard(v)).join('');
+    attachCardInteractions(homeContent);
+    homeLoaded = true;
+  } catch(err) {
+    homeContent.innerHTML = errorOrQuotaHtml(err);
+  }
+}
+
+async function appendCategoryFeed() {
+  const grid = document.getElementById('homeGrid');
+  if (!grid) return;
+  showScrollSpinner('homeGrid');
+  try {
+    const q = encodeURIComponent(activeCategoryName);
+    let url = `${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video&regionCode=IN`;
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+    if (!items.length) return;
+    const videoItems = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId);
+    grid.insertAdjacentHTML('beforeend', videoItems.map(v => buildSearchVideoCard(v)).join(''));
+    attachCardInteractions(homeContent);
+  } catch(err) {
+    hideScrollSpinner();
+    errorOrQuotaToast(err);
+  }
+}
+
+/* ============================================================
+   SEARCH
+============================================================ */
+async function doSearch(query) {
+  if (!query.trim()) return;
+
+  activeCategory = 'All';
+  renderCategoryBar();
+
+  const isShorts = activeTab === 'shorts';
+  const container = isShorts ? shortsContent : homeContent;
+  showView('main');
+
+  // FIX 2: reset global scroll state for search
+  viewMode = 'search';
+  lastSearchQuery = query.trim();
+  globalNextPageToken = null;
+  scrollFetching = false;
+
+  const qEncoded = encodeURIComponent(query.trim());
+  let url = `${BASE}/search?part=snippet&maxResults=20&q=${qEncoded}`;
+  if (isShorts) url += '&type=video&videoDuration=short';
+
+  container.innerHTML = `
+    <div class="section-title">🔍 Results for "${escapeHtml(query)}"</div>
+    <div class="${isShorts ? 'shorts-grid' : 'mixed-grid'}" id="${isShorts ? 'shortsGrid' : 'searchGrid'}">${isShorts ? buildShortSkeletons(16) : buildVideoSkeletons(8)}</div>`;
+
+  try {
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+
+    if (!items.length) { container.innerHTML = emptyHtml(`No results for "${query}"`); return; }
+
+    if (isShorts) {
+      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
+      container.innerHTML = `
+        <div class="section-title">🔍 Shorts for "${escapeHtml(query)}" <span>${items.length}</span></div>
+        <div class="shorts-grid" id="shortsGrid">${cards || emptyHtml('No matching shorts.')}</div>`;
+    } else {
+      const channels = items.filter(i => i.id?.kind === 'youtube#channel');
+      const videos   = items.filter(i => i.id?.kind !== 'youtube#channel');
+      let html = `<div class="section-title">🔍 Results for "${escapeHtml(query)}" <span>${items.length} results</span></div>`;
+      if (channels.length) {
+        html += `<div class="section-title" style="margin-top:8px;font-size:0.85rem;color:var(--navy-60);">Channels</div>
+          <div class="channels-grid" style="margin-bottom:24px;">${channels.map(buildChannelCard).join('')}</div>`;
+      }
+      if (videos.length) {
+        html += `<div class="section-title" style="margin-top:4px;font-size:0.85rem;color:var(--navy-60);">Videos</div>
+          <div class="videos-grid" id="searchGrid">${videos.map(buildSearchVideoCard).join('')}</div>`;
+      }
+      container.innerHTML = html;
+    }
+    attachCardInteractions(container);
+  } catch(err) { container.innerHTML = errorOrQuotaHtml(err); }
+}
+
+async function appendSearchFeed() {
+  const grid = document.getElementById('searchGrid') || document.getElementById('shortsGrid');
+  if (!grid) return;
+  showScrollSpinner(grid.id);
+  try {
+    const q = encodeURIComponent(lastSearchQuery);
+    let url = `${BASE}/search?part=snippet&maxResults=20&q=${q}`;
+    if (activeTab === 'shorts') url += '&type=video&videoDuration=short';
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+    if (!items.length) return;
+
+    if (activeTab === 'shorts') {
+      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
+      grid.insertAdjacentHTML('beforeend', cards);
+      attachCardInteractions(shortsContent);
+    } else {
+      const videos = items.filter(i => i.id?.kind !== 'youtube#channel');
+      grid.insertAdjacentHTML('beforeend', videos.map(buildSearchVideoCard).join(''));
+      attachCardInteractions(homeContent);
+    }
+  } catch(err) {
+    hideScrollSpinner();
+    errorOrQuotaToast(err);
+  }
+}
+
+/* ============================================================
+   TAB SWITCHING
+============================================================ */
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${activeTab}`).classList.add('active');
+    // reset scroll context on tab switch
+    scrollFetching = false;
+    if (activeTab === 'shorts') {
+      viewMode = 'shorts';
+      if (!shortsLoaded) loadShorts();
+    }
+    if (activeTab === 'home') {
+      viewMode = activeCategory !== 'All' ? 'category' : 'home';
+      if (!homeLoaded) loadHome();
+    }
+  });
+});
+
+/* ============================================================
+   SEARCH EVENTS
+============================================================ */
+searchBtn.addEventListener('click', () => doSearch(searchInput.value));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
+
+/* ============================================================
+   LOGO → HOME
+============================================================ */
+logoHome.addEventListener('click', () => {
+  watchPlayerWrap.innerHTML = '';
+  watchVideoId = null;
+  activeChannelId = null;
+  activeCategory = 'All';
+  globalNextPageToken = null;
+  scrollFetching = false;
+  viewMode = 'home';
+  homeIsRandomQuery = false;
+  homeCurrentQuery = '';
+  renderCategoryBar();
+  showView('main');
+  if (!homeLoaded) loadHome();
+});
+
+/* ============================================================
+   VIDEO WATCH PAGE
+============================================================ */
+function openWatchPage(videoId, titleHint) {
+  if (!videoId) return;
+  watchVideoId = videoId;
+  watchLiked = false;
+  watchDisliked = false;
+
+  // FIX 4: snapshot whatever feed/token was active before entering the watch
+  // page, then take over the global scroll engine for the related-videos rail.
+  preWatchMode  = viewMode;
+  preWatchToken = globalNextPageToken;
+  viewMode = 'watch';
+  globalNextPageToken = null;
+  watchPageNextToken  = null;
+  watchRecMode  = 'related';
+  watchRecQuery = titleHint || 'trending';
+  scrollFetching = false;
+
+  showView('watch');
+
+  watchPlayerWrap.innerHTML = `<iframe
+    src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    allowfullscreen loading="eager"
+    title="${escapeHtml(titleHint)}">
+  </iframe>`;
+
+  watchTitle.textContent = titleHint || 'Loading…';
+  watchStatsRow.innerHTML = `<div class="skeleton skeleton-line w60" style="height:12px;width:200px;"></div>`;
+  watchChannelRow.innerHTML = `
+    <div class="skeleton" style="width:46px;height:46px;border-radius:50%;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+      <div class="skeleton skeleton-line w60" style="height:13px;width:160px;"></div>
+      <div class="skeleton skeleton-line w40" style="height:11px;width:100px;"></div>
+    </div>`;
+  // FIX 3: wipe the rec rail once and show shimmer before the new fetch fires
+  watchRecList.innerHTML = buildRecSkeletons(10);
+
+  watchLikeBtn.classList.remove('liked');
+  watchDislikeBtn.classList.remove('disliked');
+  watchCopyBtn.classList.remove('copied');
+  watchLikeCount.textContent = 'Like';
+
+  Promise.all([
+    apiFetch(`${BASE}/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}`),
+    apiFetch(`${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(videoId)}&type=video`)
+      .then(d => { watchRecMode = 'related'; return d; })
+      .catch(() => {
+        // FIX 4: relatedToVideoId can be unavailable/quota-blocked on its own;
+        // fall back to a query-based feed and remember the mode so that
+        // appendWatchFeed() keeps paginating against the SAME endpoint.
+        watchRecMode = 'query';
+        return apiFetch(`${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(watchRecQuery)}&type=video`);
+      })
+  ]).then(([vidData, recData]) => {
+    const vid = vidData?.items?.[0];
+    if (vid) {
+      const s = vid.snippet || {}, st = vid.statistics || {};
+      watchTitle.textContent = s.title || titleHint || '';
+      const views = formatViews(st.viewCount);
+      const likes = st.likeCount ? formatCount(st.likeCount) + ' likes' : '';
+      const date = s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
+      watchStatsRow.innerHTML = [views, likes, date].filter(Boolean).map((t,i,a) =>
+        `<span>${escapeHtml(t)}</span>${i<a.length-1?'<span class="dot"></span>':''}`
+      ).join('');
+      watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
+
+      const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
+      const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
+      watchChannelRow.innerHTML = `
+        <span class="watch-ch-avatar-init" style="background:${avatarColor(s.channelTitle||'')};">${initial}</span>
+        <div class="watch-ch-info">
+          <div class="watch-ch-name" data-channelid="${channelId}">${channelTitle}</div>
+          <div class="watch-ch-subs" id="watchChSubs">Loading subscribers…</div>
+        </div>
+        <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
+
+      if (channelId) {
+        apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
+          const st2 = ch?.items?.[0]?.statistics;
+          const subs = st2?.hiddenSubscriberCount ? 'Subscribers hidden' : (formatCount(st2?.subscriberCount)||'');
+          const el = document.getElementById('watchChSubs');
+          if (el) el.textContent = subs ? subs + ' subscribers' : '';
+
+          const avatarUrl = ch?.items?.[0]?.snippet?.thumbnails?.high?.url;
+          if (avatarUrl) {
+            const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
+            if (initEl) {
+              const img = document.createElement('img');
+              img.className = 'watch-ch-avatar'; img.src = avatarUrl; img.alt = channelTitle;
+              img.onerror = () => {};
+              initEl.replaceWith(img);
+            }
+          }
+        }).catch(()=>{}); // FIX 2: a failed subscriber-count fetch must never break the page
+      }
+
+      const subBtn = document.getElementById('watchSubBtn');
+      if (subBtn) {
+        let subscribed = false;
+        subBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          subscribed = !subscribed;
+          subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
+          subBtn.classList.toggle('subscribed', subscribed);
+          showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
+        });
+      }
+
+      const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
+      if (chNameEl) {
+        chNameEl.addEventListener('click', e => {
+          e.stopPropagation();
+          if (channelId) openChannelPage(channelId);
+        });
+      }
+    }
+
+    // FIX 2 + 4: safe optional chaining on items, store the pagination token
+    // returned by whichever endpoint actually served the recommendations
+    const recItems = (recData?.items || []).filter(i => i?.id?.videoId);
+    watchPageNextToken = recData?.nextPageToken || null;
+    globalNextPageToken = watchPageNextToken; // keep the shared scroll engine in sync
+
+    if (recItems.length) {
+      watchRecList.innerHTML = recItems.map(buildRecCard).join('');
+      attachCardInteractions(watchRecList);
+    } else {
+      watchRecList.innerHTML = emptyHtml('No recommendations available.');
+    }
+  }).catch(err => {
+    watchStatsRow.innerHTML = '';
+    watchChannelRow.innerHTML = errorOrQuotaHtml(err);
+    // FIX 2: never leave the rec rail stuck on shimmer when the call fails
+    watchRecList.innerHTML = errorOrQuotaHtml(err);
+    watchPageNextToken = null;
+    globalNextPageToken = null;
+  });
+}
+
+// FIX 4: called by the global infinite-scroll engine when viewMode === 'watch'.
+// Fetches the next page of related/recommended videos using watchPageNextToken
+// and appends them WITHOUT touching the iframe player container.
+async function appendWatchFeed() {
+  if (!watchVideoId) return;
+  showScrollSpinner('watchRecList');
+  try {
+    let url;
+    if (watchRecMode === 'related') {
+      url = `${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(watchVideoId)}&type=video`;
+    } else {
+      url = `${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(watchRecQuery)}&type=video`;
+    }
+    if (watchPageNextToken) url += `&pageToken=${encodeURIComponent(watchPageNextToken)}`;
+
+    const data = await apiFetch(url);
+    const items = (data?.items || []).filter(i => i?.id?.videoId);
+    watchPageNextToken = data?.nextPageToken || null;
+    globalNextPageToken = watchPageNextToken; // keep shared engine in sync
+    hideScrollSpinner();
+
+    if (!items.length) return;
+    watchRecList.insertAdjacentHTML('beforeend', items.map(buildRecCard).join(''));
+    attachCardInteractions(watchRecList);
+  } catch(err) {
+    hideScrollSpinner();
+    errorOrQuotaToast(err);
+    // On a 403 mid-scroll, stop trying to paginate further rather than spamming the API
+    if (err && err.isQuota) { watchPageNextToken = null; globalNextPageToken = null; }
+  }
+}
+
+// Watch page action buttons
+watchLikeBtn.addEventListener('click', () => {
+  watchLiked = !watchLiked;
+  watchDisliked = false;
+  watchLikeBtn.classList.toggle('liked', watchLiked);
+  watchDislikeBtn.classList.remove('disliked');
+  showToast(watchLiked ? '👍 Liked!' : 'Like removed');
+});
+watchDislikeBtn.addEventListener('click', () => {
+  watchDisliked = !watchDisliked;
+  watchLiked = false;
+  watchDislikeBtn.classList.toggle('disliked', watchDisliked);
+  watchLikeBtn.classList.remove('liked');
+  showToast(watchDisliked ? '👎 Disliked' : 'Dislike removed');
+});
+watchShareBtn.addEventListener('click', () => shareVideo(watchVideoId, watchTitle.textContent));
+watchCopyBtn.addEventListener('click', () => {
+  if (!watchVideoId) return;
+  const url = `https://www.youtube.com/watch?v=${encodeURIComponent(watchVideoId)}`;
+  fallbackCopyLink(url);
+  watchCopyBtn.classList.add('copied');
+  watchCopyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+  setTimeout(() => {
+    watchCopyBtn.classList.remove('copied');
+    watchCopyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Link`;
+  }, 2000);
+});
+
+watchBackBtn.addEventListener('click', () => {
+  watchPlayerWrap.innerHTML = '';
+  watchVideoId = null;
+  // FIX 1/4: kill watch-page scroll state and restore whatever feed/token
+  // was active before the watch page was opened, so Home/Category/Shorts
+  // infinite scroll resumes exactly where it left off.
+  scrollFetching = false;
+  watchPageNextToken = null;
+  viewMode = preWatchMode || (activeTab === 'shorts' ? 'shorts' : (activeCategory !== 'All' ? 'category' : 'home'));
+  globalNextPageToken = preWatchToken || null;
+  preWatchMode = null;
+  preWatchToken = null;
+  showView('main');
+});
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 4: CHANNEL PAGE — true infinite feed               ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Fetches via channelId search with order=date, maxResults=15
+   - Hooks globalNextPageToken + viewMode='channel' so the global
+     scroll listener appends more uploads automatically
+   - Works across Home, Videos, Shorts sub-tabs
+   - No hard cap on content
+============================================================ */
+function channelSkeletonHtml() {
+  return `
+    <div class="ch-profile-card">
+      <div class="ch-banner-wrap">
+        <div class="ch-banner-placeholder skeleton"></div>
+      </div>
+      <div class="ch-identity-row">
+        <div class="ch-avatar-wrap">
+          <div class="skeleton" style="width:88px;height:88px;border-radius:50%;"></div>
+        </div>
+        <div class="ch-identity-info">
+          <div class="skeleton skeleton-line w60" style="height:22px;width:220px;margin-bottom:10px;"></div>
+          <div class="skeleton skeleton-line w40" style="height:13px;width:140px;margin-bottom:8px;"></div>
+          <div class="skeleton skeleton-line w40" style="height:12px;width:180px;"></div>
+        </div>
+      </div>
+      <div style="padding:14px 24px 20px;">
+        <div class="skeleton skeleton-line w80" style="height:11px;margin-bottom:6px;"></div>
+        <div class="skeleton skeleton-line w60" style="height:11px;"></div>
+      </div>
+      <div class="ch-tabs-bar" style="padding:0 4px;">
+        ${['Home','Videos','Shorts','Playlists'].map(t => `
+          <div class="ch-tab-btn" style="color:var(--slate);">${t}</div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="videos-grid" style="margin-top:24px;">${buildVideoSkeletons(8)}</div>`;
+}
+
+async function openChannelPage(channelId) {
+  if (!channelId) return;
+  activeChannelId = channelId;
+  activeChTab = 'home';
+
+  // FIX 4: reset global scroll for channel context
+  viewMode = 'channel';
+  globalNextPageToken = null;
+  scrollFetching = false;
+  channelScrollCtx = { channelId, tab: 'home' };
+
+  showView('channel');
+  channelPageContent.innerHTML = channelSkeletonHtml();
+
+  try {
+    const chData = await apiFetch(`${BASE}/channels?part=snippet,brandingSettings,statistics&id=${encodeURIComponent(channelId)}`);
+    const ch = chData.items && chData.items[0];
+    if (!ch) { channelPageContent.innerHTML = errorHtml('Channel not found.'); return; }
+    renderChannelShell(ch, channelId);
+    loadChannelTab('home', channelId, ch.snippet);
+  } catch(err) {
+    channelPageContent.innerHTML = errorOrQuotaHtml(err);
+  }
+}
+
+function renderChannelShell(ch, channelId) {
+  const sn = ch.snippet||{}, st = ch.statistics||{};
+  const branding = (ch.brandingSettings && ch.brandingSettings.image) || {};
+
+  let bannerUrl = branding.bannerExternalUrl || '';
+  if (bannerUrl) bannerUrl += '=w1280-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj';
+
+  const avatarUrl = sn.thumbnails?.high?.url || sn.thumbnails?.medium?.url || sn.thumbnails?.default?.url || '';
+  const title = escapeHtml(sn.title || 'Channel');
+  const handle = sn.customUrl ? escapeHtml('@' + sn.customUrl.replace(/^@/, '')) : '';
+  const desc = escapeHtml(sn.description || '');
+  const subCount = st.hiddenSubscriberCount
+    ? 'Subscribers hidden'
+    : (formatCount(st.subscriberCount) ? formatCount(st.subscriberCount) + ' subscribers' : '');
+  const videoCount = formatCount(st.videoCount) ? formatCount(st.videoCount) + ' videos' : '';
+  const initial = title.charAt(0).toUpperCase() || '?';
+  const avatarColor2 = avatarColor(sn.title || '');
+
+  const avatarHtml = avatarUrl
+    ? `<img class="ch-avatar-img" src="${avatarUrl}" alt="${title}"
+         onerror="this.outerHTML='<div class=\\'ch-avatar-init\\' style=\\'background:${avatarColor2};\\'>${initial}</div>'" />`
+    : `<div class="ch-avatar-init" style="background:${avatarColor2};">${initial}</div>`;
+
+  const statsItems = [subCount, videoCount].filter(Boolean);
+  const statsHtml = statsItems.map((item, i) =>
+    `<span>${escapeHtml(item)}</span>${i < statsItems.length - 1 ? '<span class="dot"></span>' : ''}`
+  ).join('');
+
+  channelPageContent.innerHTML = `
+    <div class="ch-profile-card">
+      <div class="ch-banner-wrap">
+        ${bannerUrl
+          ? `<img src="${bannerUrl}" alt="${title} banner" onerror="this.outerHTML='<div class=\\'ch-banner-placeholder\\'></div>'" />`
+          : `<div class="ch-banner-placeholder"></div>`}
+      </div>
+      <div class="ch-identity-row">
+        <div class="ch-avatar-wrap">${avatarHtml}</div>
+        <div class="ch-identity-info">
+          <div class="ch-title">${title}</div>
+          ${handle ? `<div class="ch-handle">${handle}</div>` : ''}
+          ${statsHtml ? `<div class="ch-stats-row">${statsHtml}</div>` : ''}
+        </div>
+        <button class="ch-subscribe-btn" id="chSubBtn">Subscribe</button>
+      </div>
+      ${desc ? `<p class="ch-desc">${desc}</p>` : ''}
+      <div class="ch-tabs-bar" id="chTabsBar">
+        ${['home','videos','shorts','playlists'].map(t => `
+          <button class="ch-tab-btn${t === 'home' ? ' active' : ''}" data-chtab="${t}">
+            ${t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="channel-content-area" id="chContentArea" style="margin-top:24px;">
+      <div class="videos-grid">${buildVideoSkeletons(8)}</div>
+    </div>`;
+
+  const subBtn = document.getElementById('chSubBtn');
+  if (subBtn) {
+    let subscribed = false;
+    subBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      subscribed = !subscribed;
+      subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
+      subBtn.classList.toggle('subscribed', subscribed);
+      showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
+    });
+  }
+
+  channelPageContent.querySelectorAll('.ch-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      channelPageContent.querySelectorAll('.ch-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeChTab = btn.dataset.chtab;
+      // FIX 4: reset scroll token on tab switch within channel
+      globalNextPageToken = null;
+      scrollFetching = false;
+      channelScrollCtx = { channelId, tab: activeChTab };
+      loadChannelTab(activeChTab, channelId, sn);
+    });
+  });
+}
+
+// FIX 4: loadChannelTab fetches 15 videos and stores nextPageToken globally
+async function loadChannelTab(tab, channelId, sn) {
+  const area = document.getElementById('chContentArea');
+  if (!area) return;
+
+  if (tab === 'playlists') {
+    // Playlists don't paginate with infinite scroll (limited content)
+    globalNextPageToken = null;
+    area.innerHTML = `<div class="playlists-grid">${buildVideoSkeletons(6)}</div>`;
+    try {
+      const data = await apiFetch(`${BASE}/playlists?part=snippet,contentDetails&channelId=${encodeURIComponent(channelId)}&maxResults=20`);
+      const items = data.items || [];
+      if (!items.length) { area.innerHTML = emptyHtml('No playlists found.'); return; }
+      const cards = items.map(pl => {
+        const ps = pl.snippet||{}, count = pl.contentDetails?.itemCount||0;
+        const img = ps.thumbnails?.high?.url||ps.thumbnails?.medium?.url||ps.thumbnails?.default?.url||'';
+        const plTitle = escapeHtml(ps.title||'Playlist');
+        const date = timeAgo(ps.publishedAt);
+        return `
+          <div class="playlist-card" tabindex="0" role="button" aria-label="${plTitle}">
+            <div class="playlist-thumb-wrap">
+              <img src="${img}" alt="${plTitle}" loading="lazy" onerror="this.style.display='none'" />
+              <div class="playlist-count-badge">
+                <span>${count}</span><span>videos</span>
+              </div>
+            </div>
+            <div class="playlist-body">
+              <div class="playlist-title">${plTitle}</div>
+              <div class="playlist-meta">${date}</div>
+            </div>
+          </div>`;
+      }).join('');
+      area.innerHTML = `<div class="playlists-grid">${cards}</div>`;
+    } catch(err) { area.innerHTML = errorOrQuotaHtml(err); }
+    return;
+  }
+
+  if (tab === 'shorts') {
+    area.innerHTML = `<div class="shorts-grid" id="chVideoGrid">${buildShortSkeletons(8)}</div>`;
+  } else {
+    area.innerHTML = `<div class="videos-grid" id="chVideoGrid">${buildVideoSkeletons(8)}</div>`;
+  }
+
+  // FIX 4: build channel search URL, store token in globalNextPageToken
+  let url = `${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=15&type=video&order=date`;
+  if (tab === 'shorts') url += '&videoDuration=short';
+
+  try {
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    // FIX 4: hook token into global infinite scroll
+    globalNextPageToken = data.nextPageToken || null;
+    channelScrollCtx = { channelId, tab };
+
+    const grid = document.getElementById('chVideoGrid');
+    if (!grid) return;
+    if (!items.length) { area.innerHTML = emptyHtml('No videos found.'); return; }
+
+    if (tab === 'shorts') {
+      grid.innerHTML = items.map(buildShortCard).join('');
+    } else {
+      grid.innerHTML = items.map(v => buildSearchVideoCard(v)).join('');
+    }
+    attachCardInteractions(area);
+  } catch(err) { area.innerHTML = errorOrQuotaHtml(err); }
+}
+
+// FIX 4: called by infinite scroll engine when viewMode === 'channel'
+async function appendChannelFeed() {
+  if (!channelScrollCtx) return;
+  const { channelId, tab } = channelScrollCtx;
+  if (tab === 'playlists') return; // playlists don't paginate via scroll
+
+  const grid = document.getElementById('chVideoGrid');
+  if (!grid) return;
+  showScrollSpinner('chVideoGrid');
+
+  try {
+    let url = `${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=15&type=video&order=date`;
+    if (tab === 'shorts') url += '&videoDuration=short';
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+
+    if (!items.length) return;
+
+    if (tab === 'shorts') {
+      grid.insertAdjacentHTML('beforeend', items.map(buildShortCard).join(''));
+    } else {
+      grid.insertAdjacentHTML('beforeend', items.map(v => buildSearchVideoCard(v)).join(''));
+    }
+    const area = document.getElementById('chContentArea');
+    if (area) attachCardInteractions(area);
+  } catch(err) {
+    hideScrollSpinner();
+    errorOrQuotaToast(err);
+  }
+}
+
+channelBackBtn.addEventListener('click', () => {
+  activeChannelId = null;
+  // Clear channel scroll context, restore previous view's mode
+  channelScrollCtx = null;
+  globalNextPageToken = null;
+  scrollFetching = false;
+  viewMode = activeCategory !== 'All' ? 'category' : 'home';
+  showView('main');
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+function init() {
+  detectLocalFile();
+  renderCategoryBar();
+  loadHome();
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+checkApiKey();
+</script>
+</body>
+</html>
