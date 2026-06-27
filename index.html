@@ -1,1 +1,1666 @@
-mmmmm
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ViewTube — Real-time YouTube Clone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+  ============================================================ */
+  :root {
+    --cream:   #F6F3ED;
+    --slate:   #C2CBD3;
+    --navy:    #313851;
+    --navy-60: rgba(49,56,81,0.6);
+    --navy-85: rgba(49,56,81,0.85);
+    --white:   #FFFFFF;
+    --error:   #C0392B;
+    --success: #27AE60;
+    --shadow-sm: 0 2px 8px rgba(49,56,81,0.08);
+    --shadow-md: 0 6px 24px rgba(49,56,81,0.13);
+    --shadow-lg: 0 16px 48px rgba(49,56,81,0.18);
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+    --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ============================================================
+     RESET & BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--cream);
+    color: var(--navy);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  a { text-decoration: none; color: inherit; }
+  img { display: block; width: 100%; }
+  button { cursor: pointer; border: none; background: none; font-family: var(--font); }
+
+  /* ============================================================
+     SCROLLBAR
+  ============================================================ */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: var(--radius-full); }
+
+  /* ============================================================
+     HEADER / NAVBAR
+  ============================================================ */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--cream);
+    border-bottom: 1.5px solid var(--slate);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 20px;
+    height: 64px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.25rem; font-weight: 800; color: var(--navy);
+    white-space: nowrap; flex-shrink: 0;
+    letter-spacing: -0.03em;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+
+  .search-bar {
+    flex: 1; max-width: 540px;
+    display: flex; align-items: center;
+    background: var(--white);
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .search-bar:focus-within {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(49,56,81,0.1);
+  }
+  .search-bar input {
+    flex: 1; border: none; outline: none;
+    padding: 10px 18px;
+    font-family: var(--font); font-size: 0.9rem;
+    background: transparent; color: var(--navy);
+  }
+  .search-bar input::placeholder { color: var(--slate); }
+  .search-btn {
+    padding: 10px 18px;
+    background: var(--navy); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--transition);
+    flex-shrink: 0;
+  }
+  .search-btn:hover { background: #1e2437; }
+  .search-btn svg { width: 18px; height: 18px; }
+
+  /* ============================================================
+     TABS NAV
+  ============================================================ */
+  .tabs-nav {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 20px;
+    display: flex; gap: 4px;
+    border-bottom: 1.5px solid var(--slate);
+    background: var(--cream);
+  }
+  .tab-btn {
+    padding: 14px 22px;
+    font-family: var(--font); font-size: 0.875rem; font-weight: 600;
+    color: var(--navy-60);
+    border-bottom: 2.5px solid transparent;
+    transition: color var(--transition), border-color var(--transition);
+    position: relative; bottom: -1.5px;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* ============================================================
+     MAIN CONTENT AREA
+  ============================================================ */
+  .main {
+    max-width: 1400px; margin: 0 auto;
+    padding: 32px 20px;
+  }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--navy); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title span { color: var(--slate); font-weight: 500; font-size: 0.85rem; }
+
+  .section-title-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  }
+  .section-title-row .section-title { margin-bottom: 0; }
+
+  /* ============================================================
+     REFRESH BUTTON
+  ============================================================ */
+  .refresh-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 18px;
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 700;
+    flex-shrink: 0;
+    transition: background var(--transition), transform var(--transition), border-color var(--transition);
+  }
+  .refresh-btn:hover { border-color: var(--navy); transform: translateY(-1px); background: var(--cream); }
+  .refresh-btn:active { transform: translateY(0) scale(0.97); }
+  .refresh-btn svg { width: 15px; height: 15px; transform-origin: center; }
+  .refresh-btn.spinning svg { animation: spin360 0.6s linear; }
+  @keyframes spin360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     LOAD MORE
+  ============================================================ */
+  .load-more-wrap { display: flex; justify-content: center; margin-top: 32px; }
+  .load-more-btn {
+    padding: 13px 38px;
+    background: var(--navy); color: var(--white);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em;
+    box-shadow: var(--shadow-sm);
+    transition: background var(--transition), transform var(--transition);
+  }
+  .load-more-btn:hover { background: #1e2437; transform: translateY(-2px); }
+  .load-more-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+  /* ============================================================
+     GRID LAYOUTS
+  ============================================================ */
+  .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .shorts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+  .channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  .mixed-grid {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  /* ============================================================
+     VIDEO CARD
+  ============================================================ */
+  .video-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .video-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-md);
+  }
+  .thumb-wrap {
+    position: relative;
+    width: 100%; aspect-ratio: 16/9;
+    background: var(--slate);
+    overflow: hidden;
+  }
+  .thumb-wrap img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform var(--transition);
+  }
+  .video-card:hover .thumb-wrap img { transform: scale(1.04); }
+  .duration-badge {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.78);
+    color: #fff; font-size: 0.72rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  .play-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(49,56,81,0.18);
+    opacity: 0; transition: opacity var(--transition);
+  }
+  .video-card:hover .play-overlay { opacity: 1; }
+  .play-overlay svg { width: 52px; height: 52px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+
+  .card-body { padding: 14px; }
+  .card-title {
+    font-size: 0.875rem; font-weight: 600; color: var(--navy);
+    line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .card-meta {
+    font-size: 0.78rem; color: var(--navy-60); font-weight: 500;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .card-channel { font-weight: 600; color: var(--navy); font-size: 0.82rem; }
+  .card-stats { display: flex; gap: 10px; align-items: center; }
+  .card-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); }
+
+  /* ============================================================
+     CHANNEL LINK ROW (clickable avatar + name — on cards)
+  ============================================================ */
+  .card-channel-row {
+    display: flex; align-items: center; gap: 7px;
+    cursor: pointer; margin-bottom: 8px;
+  }
+  .card-channel-row:hover .card-channel { text-decoration: underline; }
+  .channel-avatar-mini {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.68rem; font-weight: 800;
+    flex-shrink: 0; letter-spacing: 0;
+  }
+  .channel-avatar-mini.sm { width: 16px; height: 16px; font-size: 0.55rem; }
+
+  /* ============================================================
+     SHARE BUTTON (premium glass icon)
+  ============================================================ */
+  .share-btn {
+    position: absolute; z-index: 3;
+    top: 8px; right: 8px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(49,56,81,0.55);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .share-btn:hover { background: var(--navy); transform: scale(1.08); }
+  .share-btn:active { transform: scale(0.94); }
+  .share-btn svg { width: 15px; height: 15px; }
+  .share-btn-row { top: 6px; right: 6px; }
+
+  /* ============================================================
+     SHORT CARD (9:16)
+  ============================================================ */
+  .short-card {
+    background: var(--navy);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    aspect-ratio: 9/16;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .short-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-md);
+  }
+  .short-card img {
+    width: 100%; height: 100%; object-fit: cover;
+    opacity: 0.88; transition: opacity var(--transition);
+  }
+  .short-card:hover img { opacity: 1; }
+  .short-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%);
+    padding: 14px 10px 12px;
+  }
+  .short-title {
+    font-size: 0.75rem; font-weight: 600; color: #fff;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .short-channel {
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 6px; font-size: 0.68rem; font-weight: 700;
+    color: rgba(255,255,255,0.88); cursor: pointer;
+  }
+  .short-channel:hover span:last-child { text-decoration: underline; }
+  .short-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: var(--navy); color: var(--cream);
+    font-size: 0.65rem; font-weight: 700;
+    padding: 2px 7px; border-radius: var(--radius-full);
+    letter-spacing: 0.04em;
+  }
+  .share-btn-short { top: 8px; right: 8px; width: 28px; height: 28px; }
+  .share-btn-short svg { width: 13px; height: 13px; }
+  .short-play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity var(--transition);
+  }
+  .short-card:hover .short-play { opacity: 1; }
+  .short-play svg { width: 44px; height: 44px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+  /* ============================================================
+     CHANNEL CARD (search result)
+  ============================================================ */
+  .channel-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 24px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; text-align: center;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .channel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .channel-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--cream);
+    box-shadow: 0 0 0 2px var(--navy);
+    background: var(--slate);
+  }
+  .channel-name { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
+  .channel-desc {
+    font-size: 0.76rem; color: var(--navy-60); font-weight: 500;
+    line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .subscribe-btn {
+    background: var(--navy); color: var(--white);
+    font-family: var(--font); font-size: 0.78rem; font-weight: 700;
+    padding: 8px 20px; border-radius: var(--radius-full);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .subscribe-btn:hover { background: #1e2437; transform: scale(1.04); }
+
+  /* ============================================================
+     MIXED SEARCH RESULT ROW
+  ============================================================ */
+  .result-row {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px; box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow var(--transition), transform var(--transition);
+  }
+  .result-row:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(3px);
+  }
+  .result-thumb {
+    flex-shrink: 0; width: 180px; aspect-ratio: 16/9;
+    border-radius: var(--radius-sm); overflow: hidden;
+    background: var(--slate);
+    position: relative;
+  }
+  .result-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .result-info { flex: 1; padding: 4px 0; }
+  .result-title {
+    font-size: 0.95rem; font-weight: 700; color: var(--navy);
+    line-height: 1.4; margin-bottom: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .result-meta { font-size: 0.78rem; color: var(--navy-60); font-weight: 500; }
+  .result-channel {
+    font-weight: 600; color: var(--navy); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+    width: fit-content;
+  }
+  .result-channel:hover span:last-child { text-decoration: underline; }
+  .result-desc {
+    font-size: 0.78rem; color: var(--navy-60);
+    line-height: 1.5; margin-top: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ============================================================
+     SKELETON / SHIMMER
+  ============================================================ */
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #e8e4dd 25%, #f0ece6 50%, #e8e4dd 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: var(--radius-sm);
+  }
+  .skeleton-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .skeleton-thumb { aspect-ratio: 16/9; }
+  .skeleton-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .skeleton-line { height: 12px; }
+  .skeleton-line.w80 { width: 80%; }
+  .skeleton-line.w60 { width: 60%; }
+  .skeleton-line.w40 { width: 40%; }
+
+  .skeleton-short { aspect-ratio: 9/16; border-radius: var(--radius-md); }
+
+  /* ============================================================
+     MODAL / VIDEO PLAYER
+  ============================================================ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--navy-85);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--transition);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: var(--navy);
+    border-radius: var(--radius-lg);
+    width: 100%; max-width: 900px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(24px) scale(0.97);
+    transition: transform var(--transition);
+    position: relative;
+  }
+  .modal-backdrop.open .modal-box { transform: translateY(0) scale(1); }
+  .modal-player { width: 100%; aspect-ratio: 16/9; }
+  .modal-player iframe {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+  .modal-footer {
+    padding: 14px 20px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  }
+  .modal-title {
+    font-size: 0.95rem; font-weight: 700; color: var(--cream);
+    line-height: 1.4; flex: 1;
+  }
+  .modal-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .modal-close, .modal-share-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--cream);
+    transition: background var(--transition), transform var(--transition);
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.22); transform: rotate(90deg); }
+  .modal-share-btn:hover { background: rgba(255,255,255,0.22); transform: translateY(-2px); }
+  .modal-close svg, .modal-share-btn svg { width: 18px; height: 18px; }
+
+  /* ============================================================
+     API KEY OVERLAY
+  ============================================================ */
+  .api-overlay {
+    position: fixed; inset: 0; z-index: 600;
+    background: var(--navy-85);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .api-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    max-width: 480px; width: 100%;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  .api-card .api-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px;
+    background: var(--cream);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .api-card .api-icon svg { width: 32px; height: 32px; }
+  .api-card h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+  .api-card p { font-size: 0.85rem; color: var(--navy-60); line-height: 1.6; margin-bottom: 24px; }
+  .api-input-wrap {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .api-input {
+    width: 100%; padding: 12px 16px;
+    border: 1.5px solid var(--slate); border-radius: var(--radius-sm);
+    font-family: var(--font); font-size: 0.9rem; color: var(--navy);
+    outline: none;
+    transition: border-color var(--transition);
+  }
+  .api-input:focus { border-color: var(--navy); }
+  .api-submit {
+    padding: 12px;
+    background: var(--navy); color: var(--white);
+    border-radius: var(--radius-sm);
+    font-family: var(--font); font-size: 0.9rem; font-weight: 700;
+    letter-spacing: 0.03em;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .api-submit:hover { background: #1e2437; transform: translateY(-1px); }
+  .api-hint {
+    font-size: 0.75rem; color: var(--navy-60); margin-top: 10px; line-height: 1.6;
+  }
+  .api-hint a { color: var(--navy); font-weight: 700; text-decoration: underline; }
+
+  /* ============================================================
+     BANNERS
+  ============================================================ */
+  .info-banner {
+    display: none; margin-bottom: 20px;
+    background: #EEF0F5;
+    border: 1.5px solid var(--slate);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 0.84rem; color: var(--navy);
+    line-height: 1.6;
+    align-items: flex-start; gap: 12px;
+  }
+  .info-banner.visible { display: flex; }
+  .info-banner svg { flex-shrink: 0; margin-top: 2px; }
+  .error-banner {
+    background: #FDF0EF;
+    border: 1.5px solid #E8A09A;
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    font-size: 0.9rem; color: #922B21;
+    display: flex; align-items: flex-start; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .error-banner svg { flex-shrink: 0; margin-top: 2px; }
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .empty-state svg { width: 56px; height: 56px; color: var(--slate); }
+  .empty-state h3 { font-size: 1.1rem; font-weight: 700; }
+  .empty-state p { font-size: 0.85rem; color: var(--navy-60); }
+
+  /* ============================================================
+     TOAST NOTIFICATION
+  ============================================================ */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--navy); color: var(--cream);
+    padding: 14px 26px; border-radius: var(--radius-full);
+    font-size: 0.85rem; font-weight: 700;
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; pointer-events: none; z-index: 800;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast svg { flex-shrink: 0; color: var(--success); }
+
+  /* ============================================================
+     CHANNEL PAGE
+  ============================================================ */
+  .channel-page {
+    display: none;
+    max-width: 1400px; margin: 0 auto;
+    padding: 24px 20px 64px;
+  }
+  .channel-page.active {
+    display: block;
+    animation: channelFadeIn 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes channelFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; margin-bottom: 22px;
+    background: var(--white); border: 1.5px solid var(--slate);
+    border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700; color: var(--navy);
+    transition: border-color var(--transition), transform var(--transition), background var(--transition);
+  }
+  .back-btn:hover { border-color: var(--navy); transform: translateX(-2px); background: var(--cream); }
+  .back-btn svg { width: 16px; height: 16px; }
+
+  .channel-banner-skeleton {
+    width: 100%; height: 200px;
+    border-radius: var(--radius-lg);
+    margin-bottom: -44px;
+  }
+  .channel-banner {
+    width: 100%; height: 200px;
+    border-radius: var(--radius-lg);
+    background: var(--slate) center / cover no-repeat;
+    margin-bottom: -44px;
+  }
+  .channel-header {
+    display: flex; align-items: flex-end; gap: 18px;
+    padding: 0 20px; margin-bottom: 18px;
+    position: relative; z-index: 2;
+  }
+  .channel-page-avatar {
+    width: 96px; height: 96px; border-radius: 50%;
+    border: 4px solid var(--cream); box-shadow: 0 0 0 2px var(--navy);
+    object-fit: cover; background: var(--slate); flex-shrink: 0;
+  }
+  .channel-header-info { padding-bottom: 4px; min-width: 0; }
+  .channel-header-info h1 {
+    font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;
+    line-height: 1.25;
+  }
+  .channel-header-stats {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.85rem; color: var(--navy-60); font-weight: 600;
+  }
+  .channel-header-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); flex-shrink: 0; }
+  .channel-header-desc {
+    font-size: 0.85rem; color: var(--navy-60); line-height: 1.65;
+    padding: 0 20px; max-width: 760px; margin-bottom: 26px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .channel-videos-title { padding: 0 0 18px 0; }
+
+  @media (max-width: 768px) {
+    .channel-banner, .channel-banner-skeleton { height: 120px; margin-bottom: -32px; }
+    .channel-page-avatar { width: 72px; height: 72px; border-width: 3px; }
+    .channel-header { padding: 0 12px; gap: 12px; }
+    .channel-header-info h1 { font-size: 1.1rem; }
+    .channel-header-desc { padding: 0 12px; }
+    .channel-page { padding: 16px 12px 48px; }
+  }
+
+  /* ============================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 768px) {
+    .header-inner { padding: 0 12px; gap: 10px; }
+    .logo-text { display: none; }
+    .main { padding: 20px 12px; }
+    .videos-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+    .shorts-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .result-thumb { width: 120px; }
+    .result-title { font-size: 0.85rem; }
+    .modal-box { border-radius: var(--radius-md); }
+    .api-card { padding: 28px 20px; }
+    .section-title-row { gap: 10px; }
+    .refresh-btn span.refresh-label { display: none; }
+    .refresh-btn { padding: 10px; }
+  }
+
+  /* ============================================================
+     UTILITY
+  ============================================================ */
+  .hidden { display: none !important; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     API KEY OVERLAY
+============================================================ -->
+<div class="api-overlay" id="apiOverlay">
+  <div class="api-card">
+    <div class="api-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#313851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h2>API Key Required</h2>
+    <p>ViewTube connects directly to the YouTube Data API v3 in real-time. Enter your Google Cloud Console API Key to continue.</p>
+    <div class="api-input-wrap">
+      <input type="text" class="api-input" id="apiKeyInput" placeholder="Paste your YouTube Data API v3 key…" />
+      <button class="api-submit" id="apiSubmitBtn">Launch ViewTube →</button>
+    </div>
+    <p class="api-hint">
+      Get a free key at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> → Enable "YouTube Data API v3" → Create Credentials → API Key.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 3l14 9-14 9V3z" fill="#F6F3ED"/>
+        </svg>
+      </div>
+      <span class="logo-text">ViewTube</span>
+    </a>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search videos, channels, shorts…" />
+      <button class="search-btn" id="searchBtn" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <nav class="tabs-nav" role="tablist" id="tabsNav">
+    <button class="tab-btn active" data-tab="home" role="tab">🏠 Home</button>
+    <button class="tab-btn" data-tab="shorts" role="tab">⚡ Shorts</button>
+  </nav>
+</header>
+
+<!-- ============================================================
+     BANNERS
+============================================================ -->
+<div class="main" id="mainArea">
+  <div class="info-banner" id="localBanner">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#313851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>You are opening this file directly. For API calls to work properly, serve this file via a local dev server (e.g. <strong>npx serve .</strong>) or host it on <strong>Vercel</strong> / <strong>Netlify</strong> for free.</span>
+  </div>
+
+  <!-- HOME TAB -->
+  <div class="tab-content active" id="tab-home">
+    <div id="homeContent"></div>
+  </div>
+
+  <!-- SHORTS TAB -->
+  <div class="tab-content" id="tab-shorts">
+    <div id="shortsContent"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CHANNEL PAGE (dynamic view)
+============================================================ -->
+<div class="channel-page" id="channelPage">
+  <button class="back-btn" id="channelBackBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Back to Home
+  </button>
+  <div id="channelPageContent"></div>
+</div>
+
+<!-- ============================================================
+     VIDEO MODAL
+============================================================ -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-player" id="modalPlayer"></div>
+    <div class="modal-footer">
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-actions">
+        <button class="modal-share-btn" id="modalShareBtn" aria-label="Share video" title="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+          </svg>
+        </button>
+        <button class="modal-close" id="modalClose" aria-label="Close player">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOAST
+============================================================ -->
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG — Replace with your real API key
+============================================================ */
+let API_KEY = 'YOUR_API_KEY_HERE';
+
+const BASE = 'https://www.googleapis.com/youtube/v3';
+
+/* ============================================================
+   STATE
+============================================================ */
+let activeTab = 'home';
+let homeLoaded = false;
+let shortsLoaded = false;
+
+let homeNextPageToken = null;
+let shortsNextPageToken = null;
+
+let currentModalVideoId = null;
+let currentModalTitle = '';
+
+let toastTimer = null;
+
+/* Rotating feed variants used for the Home tab + Refresh Feed button.
+   Rotating regionCode is the simplest reliable way to keep "Trending"
+   genuinely fresh/different across refreshes without burning extra quota. */
+const FEED_VARIANTS = [
+  { label: 'Trending in India',        params: 'chart=mostPopular&regionCode=IN' },
+  { label: 'Trending in the US',       params: 'chart=mostPopular&regionCode=US' },
+  { label: 'Trending in the UK',       params: 'chart=mostPopular&regionCode=GB' },
+  { label: 'Trending in Japan',        params: 'chart=mostPopular&regionCode=JP' },
+  { label: 'Trending in Brazil',       params: 'chart=mostPopular&regionCode=BR' },
+  { label: 'Trending in South Korea',  params: 'chart=mostPopular&regionCode=KR' },
+  { label: 'Trending in Germany',      params: 'chart=mostPopular&regionCode=DE' },
+  { label: 'Trending in Australia',    params: 'chart=mostPopular&regionCode=AU' },
+];
+let currentFeedIndex = 0;
+
+/* ============================================================
+   DOM REFS
+============================================================ */
+const apiOverlay   = document.getElementById('apiOverlay');
+const apiKeyInput  = document.getElementById('apiKeyInput');
+const apiSubmitBtn = document.getElementById('apiSubmitBtn');
+const localBanner  = document.getElementById('localBanner');
+const searchInput  = document.getElementById('searchInput');
+const searchBtn    = document.getElementById('searchBtn');
+const tabBtns      = document.querySelectorAll('.tab-btn');
+const tabsNav      = document.getElementById('tabsNav');
+const mainArea     = document.getElementById('mainArea');
+const homeContent  = document.getElementById('homeContent');
+const shortsContent= document.getElementById('shortsContent');
+const modalBackdrop= document.getElementById('modalBackdrop');
+const modalPlayer  = document.getElementById('modalPlayer');
+const modalTitle   = document.getElementById('modalTitle');
+const modalClose   = document.getElementById('modalClose');
+const modalShareBtn= document.getElementById('modalShareBtn');
+const toastEl      = document.getElementById('toast');
+const channelPage  = document.getElementById('channelPage');
+const channelPageContent = document.getElementById('channelPageContent');
+const channelBackBtn = document.getElementById('channelBackBtn');
+
+/* ============================================================
+   API KEY GATE
+============================================================ */
+function isKeyValid(k) { return k && k.trim() && k.trim() !== 'YOUR_API_KEY_HERE'; }
+
+function checkApiKey() {
+  if (isKeyValid(API_KEY)) {
+    apiOverlay.style.display = 'none';
+    init();
+  } else {
+    apiOverlay.style.display = 'flex';
+  }
+}
+
+apiSubmitBtn.addEventListener('click', () => {
+  const v = apiKeyInput.value.trim();
+  if (!v) { apiKeyInput.style.borderColor = '#C0392B'; return; }
+  apiKeyInput.style.borderColor = '';
+  API_KEY = v;
+  apiOverlay.style.display = 'none';
+  init();
+});
+
+apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') apiSubmitBtn.click(); });
+
+/* ============================================================
+   LOCAL FILE WARNING
+============================================================ */
+function detectLocalFile() {
+  const proto = location.protocol;
+  if (proto === 'file:' || proto === 'blob:') {
+    localBanner.classList.add('visible');
+  }
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function formatViews(n) {
+  if (!n) return '';
+  n = parseInt(n, 10);
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B views';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M views';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K views';
+  return n + ' views';
+}
+
+function formatCount(n) {
+  if (n === undefined || n === null || n === '') return '';
+  n = parseInt(n, 10);
+  if (isNaN(n)) return '';
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 2592000) return Math.floor(diff/86400) + 'd ago';
+  if (diff < 31104000) return Math.floor(diff/2592000) + 'mo ago';
+  return Math.floor(diff/31104000) + 'y ago';
+}
+
+function thumb(item, prefer = 'medium') {
+  const t = item?.snippet?.thumbnails;
+  return (t?.maxres || t?.high || t?.medium || t?.default)?.url || '';
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Deterministic pastel-ish dark color from a channel name, used to render a
+   lightweight "avatar" without needing an extra channels.list call per card. */
+function avatarColor(name) {
+  const str = name || '?';
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) % 360;
+  }
+  hash = Math.abs(hash);
+  return `hsl(${hash}, 42%, 38%)`;
+}
+
+async function apiFetch(url) {
+  const sep = url.includes('?') ? '&' : '?';
+  const res = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY));
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const j = await res.json(); msg = j?.error?.message || msg; } catch(_) {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+/* ============================================================
+   SKELETON BUILDERS
+============================================================ */
+function buildVideoSkeletons(count = 12) {
+  return Array.from({length: count}, () => `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-thumb"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton-line w80"></div>
+        <div class="skeleton skeleton-line w60"></div>
+        <div class="skeleton skeleton-line w40"></div>
+      </div>
+    </div>`).join('');
+}
+
+function buildShortSkeletons(count = 16) {
+  return Array.from({length: count}, () =>
+    `<div class="skeleton skeleton-short"></div>`).join('');
+}
+
+/* ============================================================
+   ERROR / EMPTY
+============================================================ */
+function errorHtml(msg) {
+  return `<div class="error-banner">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span><strong>Could not load content.</strong> ${escapeHtml(msg)}. Please check your API key, quota, or network connection.</span>
+  </div>`;
+}
+
+function emptyHtml(msg = 'Nothing found.') {
+  return `<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <h3>${escapeHtml(msg)}</h3>
+    <p>Try a different search term or check back later.</p>
+  </div>`;
+}
+
+/* ============================================================
+   CARD BUILDERS
+============================================================ */
+function shareBtnSvg() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+    <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+  </svg>`;
+}
+
+function buildVideoCard(video, videoId) {
+  const s = video.snippet || {};
+  const st = video.statistics || {};
+  const title = escapeHtml(s.title || 'Untitled');
+  const channel = escapeHtml(s.channelTitle || '');
+  const channelId = s.channelId || '';
+  const views = formatViews(st.viewCount);
+  const date = timeAgo(s.publishedAt);
+  const imgSrc = thumb(video);
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
+  return `
+    <div class="video-card" data-videoid="${videoId}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="thumb-wrap">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="rgba(49,56,81,0.85)"/>
+            <polygon points="10,8 18,12 10,16" fill="#F6F3ED"/>
+          </svg>
+        </div>
+        <button class="share-btn" data-videoid="${videoId}" data-title="${title}" aria-label="Share video" title="Share">
+          ${shareBtnSvg()}
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title}</div>
+        <div class="card-channel-row" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span class="card-channel">${channel}</span>
+        </div>
+        <div class="card-meta">
+          <div class="card-stats">
+            ${views ? `<span>${views}</span>` : ''}
+            ${views && date ? `<span class="dot"></span>` : ''}
+            ${date ? `<span>${date}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildShortCard(item) {
+  const s = item.snippet || {};
+  const id = item.id?.videoId || item.id || '';
+  const title = escapeHtml(s.title || 'Short');
+  const channel = escapeHtml(s.channelTitle || '');
+  const channelId = s.channelId || '';
+  const imgSrc = thumb(item);
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
+  return `
+    <div class="short-card" data-videoid="${id}" data-title="${title}" tabindex="0" role="button" aria-label="Play short: ${title}">
+      <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+      <div class="short-badge">⚡ SHORT</div>
+      <button class="share-btn share-btn-short" data-videoid="${id}" data-title="${title}" aria-label="Share short" title="Share">
+        ${shareBtnSvg()}
+      </button>
+      <div class="short-play">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="rgba(246,243,237,0.9)"/>
+          <polygon points="10,8 18,12 10,16" fill="#313851"/>
+        </svg>
+      </div>
+      <div class="short-overlay">
+        <div class="short-title">${title}</div>
+        ${channel ? `<div class="short-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini sm" style="background:${avatarColor(channel)}">${initial}</span>
+          <span>${channel}</span>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function buildChannelCard(item) {
+  const s = item.snippet || {};
+  const channelId = item.id?.channelId || s.channelId || (typeof item.id === 'string' ? item.id : '');
+  const name = escapeHtml(s.title || s.channelTitle || 'Channel');
+  const desc = escapeHtml(s.description || '');
+  const img = thumb(item);
+  return `
+    <div class="channel-card" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${name}">
+      <img class="channel-avatar" src="${img}" alt="${name}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2272%22><rect width=%2272%22 height=%2272%22 fill=%22%23C2CBD3%22/></svg>'" />
+      <div class="channel-name">${name}</div>
+      ${desc ? `<div class="channel-desc">${desc}</div>` : ''}
+      <button class="subscribe-btn">Subscribe</button>
+    </div>`;
+}
+
+function buildResultRow(item) {
+  const s = item.snippet || {};
+  const id = item.id?.videoId || item.id || '';
+  const kind = item.id?.kind || '';
+  const title = escapeHtml(s.title || 'Untitled');
+  const channel = escapeHtml(s.channelTitle || s.title || '');
+  const channelId = s.channelId || '';
+  const desc = escapeHtml(s.description || '');
+  const date = timeAgo(s.publishedAt);
+  const imgSrc = thumb(item);
+  const initial = (channel || '?').trim().charAt(0).toUpperCase() || '?';
+
+  if (kind === 'youtube#channel') {
+    return buildChannelCard(item);
+  }
+
+  return `
+    <div class="result-row" data-videoid="${id}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="result-thumb">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <button class="share-btn share-btn-row" data-videoid="${id}" data-title="${title}" aria-label="Share video" title="Share">
+          ${shareBtnSvg()}
+        </button>
+      </div>
+      <div class="result-info">
+        <div class="result-title">${title}</div>
+        <div class="result-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span>${channel}</span>
+        </div>
+        <div class="result-meta">${date}</div>
+        ${desc ? `<div class="result-desc">${desc}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+function showToast(msg) {
+  toastEl.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    <span>${escapeHtml(msg)}</span>`;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+
+/* ============================================================
+   SHARE SYSTEM
+============================================================ */
+function fallbackCopyLink(url) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('Link Copied!'))
+      .catch(() => legacyCopy(url));
+  } else {
+    legacyCopy(url);
+  }
+}
+
+function legacyCopy(url) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showToast('Link Copied!');
+  } catch (_) {
+    showToast('Could not copy link.');
+  }
+}
+
+async function shareVideo(videoId, title) {
+  if (!videoId) return;
+  const url = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: title || 'Check this out on ViewTube', text: title || '', url });
+    } catch (err) {
+      if (err && err.name !== 'AbortError') fallbackCopyLink(url);
+    }
+  } else {
+    fallbackCopyLink(url);
+  }
+}
+
+/* ============================================================
+   EVENT DELEGATION — CARD INTERACTIONS
+   (video play / channel navigation / share — with correct
+   event-bubbling isolation so a channel or share click never
+   triggers the video player)
+============================================================ */
+function attachCardInteractions(root) {
+  root.querySelectorAll('[data-videoid]').forEach(el => {
+    if (el.dataset.boundVideo) return;
+    el.dataset.boundVideo = '1';
+    el.addEventListener('click', () => {
+      const vid = el.dataset.videoid;
+      const title = el.dataset.title || '';
+      if (vid) openModal(vid, title);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+    });
+  });
+
+  root.querySelectorAll('[data-channelid]').forEach(el => {
+    if (el.dataset.boundChannel) return;
+    el.dataset.boundChannel = '1';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const cid = el.dataset.channelid;
+      if (cid) openChannelPage(cid);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault(); e.stopPropagation();
+        const cid = el.dataset.channelid;
+        if (cid) openChannelPage(cid);
+      }
+    });
+  });
+
+  root.querySelectorAll('.share-btn').forEach(el => {
+    if (el.dataset.boundShare) return;
+    el.dataset.boundShare = '1';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      shareVideo(el.dataset.videoid, el.dataset.title);
+    });
+  });
+
+  root.querySelectorAll('.subscribe-btn').forEach(el => {
+    if (el.dataset.boundSub) return;
+    el.dataset.boundSub = '1';
+    el.addEventListener('click', e => e.stopPropagation());
+  });
+}
+
+/* ============================================================
+   LOADERS — HOME (with pagination + refresh)
+============================================================ */
+async function loadHome(opts = {}) {
+  const append = !!opts.append;
+  const variant = FEED_VARIANTS[currentFeedIndex];
+
+  if (!append) {
+    homeNextPageToken = null;
+    homeContent.innerHTML = `
+      <div class="section-title-row">
+        <div class="section-title">🔥 ${variant.label}</div>
+        <button class="refresh-btn" id="refreshFeedBtn" title="Get a fresh batch of trending videos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span class="refresh-label">Refresh Feed</span>
+        </button>
+      </div>
+      <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>
+      <div class="load-more-wrap" id="homeLoadMoreWrap"></div>`;
+    const refreshBtn = document.getElementById('refreshFeedBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', refreshFeed);
+  }
+
+  const grid = document.getElementById('homeGrid');
+
+  try {
+    let url = `${BASE}/videos?part=snippet,statistics&${variant.params}&maxResults=12`;
+    if (append && homeNextPageToken) url += `&pageToken=${encodeURIComponent(homeNextPageToken)}`;
+
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    homeNextPageToken = data.nextPageToken || null;
+
+    if (!items.length && !append) {
+      grid.innerHTML = emptyHtml('No trending videos found.');
+      renderHomeLoadMore();
+      return;
+    }
+
+    const cards = items.map(v => buildVideoCard(v, v.id)).join('');
+    if (append) {
+      grid.insertAdjacentHTML('beforeend', cards);
+    } else {
+      grid.innerHTML = cards;
+    }
+
+    attachCardInteractions(homeContent);
+    renderHomeLoadMore();
+    homeLoaded = true;
+  } catch (err) {
+    if (append) {
+      showToast('Could not load more videos.');
+      renderHomeLoadMore();
+    } else {
+      homeContent.innerHTML = errorHtml(err.message);
+    }
+  }
+}
+
+function renderHomeLoadMore() {
+  const wrap = document.getElementById('homeLoadMoreWrap');
+  if (!wrap) return;
+  if (homeNextPageToken) {
+    wrap.innerHTML = `<button class="load-more-btn" id="homeLoadMoreBtn">Load More Videos</button>`;
+    document.getElementById('homeLoadMoreBtn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
+      await loadHome({ append: true });
+    });
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+function refreshFeed() {
+  const btn = document.getElementById('refreshFeedBtn');
+  if (btn) btn.classList.add('spinning');
+  let next = currentFeedIndex;
+  if (FEED_VARIANTS.length > 1) {
+    while (next === currentFeedIndex) next = Math.floor(Math.random() * FEED_VARIANTS.length);
+  }
+  currentFeedIndex = next;
+  loadHome().finally(() => { if (btn) setTimeout(() => btn.classList?.remove('spinning'), 50); });
+}
+
+/* ============================================================
+   LOADERS — SHORTS (with pagination)
+============================================================ */
+async function loadShorts(opts = {}) {
+  const append = !!opts.append;
+
+  if (!append) {
+    shortsNextPageToken = null;
+    shortsContent.innerHTML = `
+      <div class="section-title-row">
+        <div class="section-title">⚡ Shorts</div>
+      </div>
+      <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>
+      <div class="load-more-wrap" id="shortsLoadMoreWrap"></div>`;
+  }
+
+  const grid = document.getElementById('shortsGrid');
+
+  try {
+    let url = `${BASE}/search?part=snippet&maxResults=16&q=shorts&type=video&videoDuration=short`;
+    if (append && shortsNextPageToken) url += `&pageToken=${encodeURIComponent(shortsNextPageToken)}`;
+
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    shortsNextPageToken = data.nextPageToken || null;
+
+    if (!items.length && !append) {
+      grid.innerHTML = emptyHtml('No shorts found.');
+      renderShortsLoadMore();
+      return;
+    }
+
+    const cards = items.map(buildShortCard).join('');
+    if (append) {
+      grid.insertAdjacentHTML('beforeend', cards);
+    } else {
+      grid.innerHTML = cards;
+    }
+
+    attachCardInteractions(shortsContent);
+    renderShortsLoadMore();
+    shortsLoaded = true;
+  } catch (err) {
+    if (append) {
+      showToast('Could not load more shorts.');
+      renderShortsLoadMore();
+    } else {
+      shortsContent.innerHTML = errorHtml(err.message);
+    }
+  }
+}
+
+function renderShortsLoadMore() {
+  const wrap = document.getElementById('shortsLoadMoreWrap');
+  if (!wrap) return;
+  if (shortsNextPageToken) {
+    wrap.innerHTML = `<button class="load-more-btn" id="shortsLoadMoreBtn">Load More Shorts</button>`;
+    document.getElementById('shortsLoadMoreBtn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
+      await loadShorts({ append: true });
+    });
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+/* ============================================================
+   SEARCH
+============================================================ */
+async function doSearch(query) {
+  if (!query.trim()) return;
+
+  const isShorts = activeTab === 'shorts';
+  const container = isShorts ? shortsContent : homeContent;
+  const qEncoded = encodeURIComponent(query.trim());
+  let url = `${BASE}/search?part=snippet&maxResults=20&q=${qEncoded}`;
+  if (isShorts) url += '&type=video&videoDuration=short';
+
+  container.innerHTML = `
+    <div class="section-title">🔍 Results for "${escapeHtml(query)}"</div>
+    <div class="${isShorts ? 'shorts-grid' : 'mixed-grid'}">${isShorts ? buildShortSkeletons(16) : buildVideoSkeletons(8)}</div>`;
+
+  try {
+    const data = await apiFetch(url);
+    const items = data.items || [];
+
+    if (!items.length) {
+      container.innerHTML = emptyHtml(`No results for "${query}"`);
+      return;
+    }
+
+    if (isShorts) {
+      const cards = items
+        .filter(i => i.id?.kind === 'youtube#video')
+        .map(buildShortCard).join('');
+      container.innerHTML = `
+        <div class="section-title">🔍 Shorts for "${escapeHtml(query)}" <span>${items.length}</span></div>
+        <div class="shorts-grid">${cards || emptyHtml('No matching shorts.')}</div>`;
+    } else {
+      // Separate channels and videos for mixed rendering
+      const channels = items.filter(i => i.id?.kind === 'youtube#channel');
+      const videos   = items.filter(i => i.id?.kind !== 'youtube#channel');
+      let html = `<div class="section-title">🔍 Results for "${escapeHtml(query)}" <span>${items.length} results</span></div>`;
+
+      if (channels.length) {
+        html += `<div class="section-title" style="margin-top:8px;font-size:0.85rem;color:var(--navy-60);">Channels</div>
+          <div class="channels-grid" style="margin-bottom:24px;">${channels.map(buildChannelCard).join('')}</div>`;
+      }
+      if (videos.length) {
+        html += `<div class="section-title" style="margin-top:4px;font-size:0.85rem;color:var(--navy-60);">Videos</div>
+          <div class="mixed-grid">${videos.map(buildResultRow).join('')}</div>`;
+      }
+      container.innerHTML = html;
+    }
+    attachCardInteractions(container);
+  } catch(err) {
+    container.innerHTML = errorHtml(err.message);
+  }
+}
+
+/* ============================================================
+   CHANNEL PAGE
+============================================================ */
+function channelSkeletonHtml() {
+  return `
+    <div class="channel-banner-skeleton skeleton"></div>
+    <div class="channel-header">
+      <div class="channel-page-avatar skeleton"></div>
+      <div class="channel-header-info">
+        <div class="skeleton skeleton-line w60" style="height:20px;width:220px;margin-bottom:10px;"></div>
+        <div class="skeleton skeleton-line w40" style="height:13px;width:140px;"></div>
+      </div>
+    </div>
+    <div class="videos-grid" style="margin-top:24px;">${buildVideoSkeletons(12)}</div>`;
+}
+
+function renderChannelHeaderHtml(ch) {
+  const sn = ch.snippet || {};
+  const st = ch.statistics || {};
+  const branding = (ch.brandingSettings && ch.brandingSettings.image) || {};
+  let bannerUrl = branding.bannerExternalUrl || '';
+  if (bannerUrl) bannerUrl += '=w1280-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj';
+  const avatar = sn.thumbnails?.high?.url || sn.thumbnails?.medium?.url || sn.thumbnails?.default?.url || '';
+  const title = escapeHtml(sn.title || 'Channel');
+  const desc = escapeHtml(sn.description || '');
+  const subCount = st.hiddenSubscriberCount
+    ? 'Subscribers hidden'
+    : (formatCount(st.subscriberCount) ? `${formatCount(st.subscriberCount)} subscribers` : '');
+  const videoCount = formatCount(st.videoCount) ? `${formatCount(st.videoCount)} videos` : '';
+
+  return `
+    <div class="channel-banner" style="${bannerUrl ? `background-image:url('${bannerUrl}')` : ''}"></div>
+    <div class="channel-header">
+      <img class="channel-page-avatar" src="${avatar}" alt="${title}" onerror="this.style.visibility='hidden'" />
+      <div class="channel-header-info">
+        <h1>${title}</h1>
+        <div class="channel-header-stats">
+          ${subCount ? `<span>${subCount}</span>` : ''}
+          ${subCount && videoCount ? `<span class="dot"></span>` : ''}
+          ${videoCount ? `<span>${videoCount}</span>` : ''}
+        </div>
+      </div>
+    </div>
+    ${desc ? `<p class="channel-header-desc">${desc}</p>` : ''}
+    <div class="section-title channel-videos-title">📹 Latest Videos</div>`;
+}
+
+function renderChannelVideosHtml(videos) {
+  if (!videos.length) return emptyHtml('This channel has no public videos yet.');
+  const cards = videos.map(v => buildVideoCard(v, v.id?.videoId || v.id)).join('');
+  return `<div class="videos-grid">${cards}</div>`;
+}
+
+async function openChannelPage(channelId) {
+  if (!channelId) return;
+
+  // Show shell + skeleton, hide the regular feed/tabs underneath.
+  mainArea.style.display = 'none';
+  tabsNav.style.display = 'none';
+  channelPage.classList.add('active');
+  channelPageContent.innerHTML = channelSkeletonHtml();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  try {
+    const [chData, vidData] = await Promise.all([
+      apiFetch(`${BASE}/channels?part=snippet,brandingSettings,statistics&id=${encodeURIComponent(channelId)}`),
+      apiFetch(`${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=12&type=video&order=date`)
+    ]);
+
+    const ch = chData.items && chData.items[0];
+    if (!ch) {
+      channelPageContent.innerHTML = errorHtml('Channel not found or unavailable.');
+      return;
+    }
+
+    const videos = vidData.items || [];
+    channelPageContent.innerHTML = renderChannelHeaderHtml(ch) + renderChannelVideosHtml(videos);
+    attachCardInteractions(channelPageContent);
+  } catch (err) {
+    channelPageContent.innerHTML = errorHtml(err.message);
+  }
+}
+
+function closeChannelPage() {
+  channelPage.classList.remove('active');
+  mainArea.style.display = '';
+  tabsNav.style.display = '';
+}
+
+channelBackBtn.addEventListener('click', closeChannelPage);
+
+/* ============================================================
+   MODAL PLAYER
+============================================================ */
+function openModal(videoId, title) {
+  currentModalVideoId = videoId;
+  currentModalTitle = title || '';
+  modalPlayer.innerHTML = `<iframe
+    src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    allowfullscreen
+    loading="eager"
+    title="${escapeHtml(title)}">
+  </iframe>`;
+  modalTitle.textContent = title;
+  modalBackdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  modalBackdrop.classList.remove('open');
+  modalPlayer.innerHTML = '';
+  document.body.style.overflow = '';
+  currentModalVideoId = null;
+  currentModalTitle = '';
+}
+
+modalClose.addEventListener('click', closeModal);
+modalShareBtn.addEventListener('click', () => shareVideo(currentModalVideoId, currentModalTitle));
+modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ============================================================
+   TAB SWITCHING
+============================================================ */
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${activeTab}`).classList.add('active');
+
+    if (activeTab === 'shorts' && !shortsLoaded) loadShorts();
+    if (activeTab === 'home' && !homeLoaded) loadHome();
+  });
+});
+
+/* ============================================================
+   SEARCH EVENTS
+============================================================ */
+searchBtn.addEventListener('click', () => doSearch(searchInput.value));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
+
+/* ============================================================
+   INIT
+============================================================ */
+function init() {
+  detectLocalFile();
+  loadHome();
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+checkApiKey();
+</script>
+</body>
+</html>
