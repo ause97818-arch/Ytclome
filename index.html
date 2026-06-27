@@ -2128,20 +2128,32 @@ async function loadShorts(opts = {}) {
       <div class="section-title-row"><div class="section-title">⚡ Shorts</div></div>
       <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>`;
   }
+
   const grid = document.getElementById('shortsGrid');
+  if (!grid) { isFetching = false; return; }
+
   try {
     let url = `${BASE}/search?part=snippet&maxResults=20&q=shorts&type=video&videoDuration=short&regionCode=IN`;
     if (append && globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+
     const data = await apiFetch(url);
     const items = data.items || [];
+
+    // Update token BEFORE rendering so next scroll trigger sees it immediately
     globalNextPageToken = data.nextPageToken || null;
+
     if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); return; }
+
     const cards = items.map(buildShortCard).join('');
-    if (append) { hideScrollSpinner(); grid.insertAdjacentHTML('beforeend', cards); }
-    else grid.innerHTML = cards;
+    if (append) {
+      hideScrollSpinner();
+      grid.insertAdjacentHTML('beforeend', cards);
+    } else {
+      grid.innerHTML = cards;
+    }
     attachCardInteractions(shortsContent);
     shortsLoaded = true;
-  } catch(err) {
+  } catch (err) {
     hideScrollSpinner();
     if (append) errorOrQuotaToast(err);
     else shortsContent.innerHTML = errorOrQuotaHtml(err);
@@ -2151,10 +2163,17 @@ async function loadShorts(opts = {}) {
 }
 
 async function appendShortsFeed() {
+  // Guard: don't proceed if no token or already fetching
   if (isFetching || !globalNextPageToken) return;
+
   const grid = document.getElementById('shortsGrid');
   if (!grid) return;
+
+  // Show spinner BEFORE setting isFetching so loadShorts doesn't see a stale lock
   showScrollSpinner('shortsGrid');
+
+  // Delegate entirely to loadShorts with append mode
+  // loadShorts manages isFetching + token + spinner hide + card inject
   await loadShorts({ append: true });
 }
 
