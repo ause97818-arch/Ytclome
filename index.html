@@ -137,7 +137,7 @@
   .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
 
   /* ============================================================
-     CATEGORY TAGS BAR  (Upgrade 2)
+     CATEGORY TAGS BAR
   ============================================================ */
   .category-bar-wrap {
     background: var(--cream);
@@ -253,7 +253,7 @@
   }
 
   /* ============================================================
-     VIDEO CARD
+     VIDEO CARD  — canonical card used by home feed AND category feed
   ============================================================ */
   .video-card {
     background: var(--white);
@@ -261,6 +261,8 @@
     overflow: hidden;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
     transition: transform var(--transition), box-shadow var(--transition);
   }
   .video-card:hover {
@@ -269,9 +271,11 @@
   }
   .thumb-wrap {
     position: relative;
-    width: 100%; aspect-ratio: 16/9;
+    width: 100%;
+    aspect-ratio: 16/9;
     background: var(--slate);
     overflow: hidden;
+    flex-shrink: 0;
   }
   .thumb-wrap img {
     width: 100%; height: 100%; object-fit: cover;
@@ -294,27 +298,38 @@
   .video-card:hover .play-overlay { opacity: 1; }
   .play-overlay svg { width: 52px; height: 52px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
 
-  .card-body { padding: 14px; }
+  .card-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
   .card-title {
     font-size: 0.875rem; font-weight: 600; color: var(--navy);
     line-height: 1.45;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; margin-bottom: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    word-break: break-word;
   }
   .card-meta {
     font-size: 0.78rem; color: var(--navy-60); font-weight: 500;
     display: flex; flex-direction: column; gap: 3px;
+    overflow: hidden;
   }
-  .card-channel { font-weight: 600; color: var(--navy); font-size: 0.82rem; }
-  .card-stats { display: flex; gap: 10px; align-items: center; }
-  .card-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); }
+  .card-channel { font-weight: 600; color: var(--navy); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-stats { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .card-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); flex-shrink: 0; }
 
   /* ============================================================
-     CHANNEL LINK ROW (clickable avatar + name — on cards)
+     CHANNEL LINK ROW (clickable avatar + name on cards)
   ============================================================ */
   .card-channel-row {
     display: flex; align-items: center; gap: 7px;
     cursor: pointer; margin-bottom: 8px;
+    min-width: 0; overflow: hidden;
   }
   .card-channel-row:hover .card-channel { text-decoration: underline; }
   .channel-avatar-mini {
@@ -326,7 +341,7 @@
   .channel-avatar-mini.sm { width: 16px; height: 16px; font-size: 0.55rem; }
 
   /* ============================================================
-     SHARE BUTTON (premium glass icon)
+     SHARE BUTTON
   ============================================================ */
   .share-btn {
     position: absolute; z-index: 3;
@@ -462,7 +477,7 @@
     position: relative;
   }
   .result-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .result-info { flex: 1; padding: 4px 0; }
+  .result-info { flex: 1; padding: 4px 0; min-width: 0; overflow: hidden; }
   .result-title {
     font-size: 0.95rem; font-weight: 700; color: var(--navy);
     line-height: 1.4; margin-bottom: 6px;
@@ -611,7 +626,7 @@
   .api-hint a { color: var(--navy); font-weight: 700; text-decoration: underline; }
 
   /* ============================================================
-     VIDEO WATCH PAGE  (Upgrade 1)
+     VIDEO WATCH PAGE
   ============================================================ */
   .watch-page {
     display: none;
@@ -640,9 +655,7 @@
   }
 
   /* Title + meta block */
-  .watch-meta-block {
-    margin-bottom: 16px;
-  }
+  .watch-meta-block { margin-bottom: 16px; }
   .watch-title {
     font-size: 1.25rem; font-weight: 800; color: var(--navy);
     line-height: 1.35; margin-bottom: 10px;
@@ -738,14 +751,14 @@
     background: var(--slate); position: relative;
   }
   .rec-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .rec-info { flex: 1; padding: 2px 0; }
+  .rec-info { flex: 1; padding: 2px 0; min-width: 0; overflow: hidden; }
   .rec-title {
     font-size: 0.82rem; font-weight: 700; color: var(--navy);
     line-height: 1.4; margin-bottom: 5px;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .rec-ch { font-size: 0.74rem; color: var(--navy-60); font-weight: 600; margin-bottom: 3px; }
+  .rec-ch { font-size: 0.74rem; color: var(--navy-60); font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rec-meta { font-size: 0.72rem; color: var(--navy-60); }
   .watch-back-btn {
     display: inline-flex; align-items: center; gap: 8px;
@@ -759,7 +772,7 @@
   .watch-back-btn svg { width: 16px; height: 16px; }
 
   /* ============================================================
-     CHANNEL PAGE  (Upgrade 3)
+     CHANNEL PAGE  — FIX 1: Complete overhaul for clean stacked layout
   ============================================================ */
   .channel-page {
     display: none;
@@ -782,65 +795,154 @@
   .back-btn:hover { border-color: var(--navy); transform: translateX(-2px); background: var(--cream); }
   .back-btn svg { width: 16px; height: 16px; }
 
-  .channel-banner-skeleton {
-    width: 100%; height: 200px;
+  /* Channel profile card wrapper — clean stacked block, no overlap tricks */
+  .ch-profile-card {
+    background: var(--white);
     border-radius: var(--radius-lg);
-    margin-bottom: -44px;
-  }
-  .channel-banner {
-    width: 100%; height: 220px;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--navy) 0%, #4a5680 100%) center / cover no-repeat;
-    margin-bottom: -56px;
-  }
-  .channel-header {
-    display: flex; align-items: flex-end; gap: 18px;
-    padding: 0 20px; margin-bottom: 18px;
-    position: relative; z-index: 2;
-  }
-  .channel-page-avatar {
-    width: 100px; height: 100px; border-radius: 50%;
-    border: 4px solid var(--cream); box-shadow: 0 0 0 2px var(--navy);
-    object-fit: cover; background: var(--slate); flex-shrink: 0;
-  }
-  .channel-header-info { padding-bottom: 4px; min-width: 0; flex: 1; }
-  .channel-header-info h1 {
-    font-size: 1.4rem; font-weight: 800; margin-bottom: 4px;
-    line-height: 1.25;
-  }
-  .channel-handle { font-size: 0.8rem; color: var(--navy-60); font-weight: 600; margin-bottom: 6px; }
-  .channel-header-stats {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 0.85rem; color: var(--navy-60); font-weight: 600;
-  }
-  .channel-header-stats .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--slate); flex-shrink: 0; }
-  .channel-header-desc {
-    font-size: 0.85rem; color: var(--navy-60); line-height: 1.65;
-    padding: 0 20px; max-width: 760px; margin-bottom: 0;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
   }
 
-  /* Channel Sub-Tabs  */
-  .channel-tabs-bar {
+  /* Banner: full-width, strict 4:1 aspect, no padding, clean crop */
+  .ch-banner-wrap {
+    width: 100%;
+    aspect-ratio: 4/1;
+    background: linear-gradient(135deg, var(--navy) 0%, #4a5680 100%);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ch-banner-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+  }
+  .ch-banner-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--navy) 0%, #4a5680 60%, #6372a0 100%);
+  }
+
+  /* Avatar + identity row below banner */
+  .ch-identity-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 24px 0;
+  }
+
+  /* Round avatar with thick border */
+  .ch-avatar-wrap {
+    flex-shrink: 0;
+    margin-top: -40px; /* lift avatar to overlap banner bottom edge slightly */
+    position: relative;
+    z-index: 2;
+  }
+  .ch-avatar-img {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    box-shadow: 0 0 0 3px var(--navy), var(--shadow-md);
+    object-fit: cover;
+    background: var(--slate);
+    display: block;
+  }
+  .ch-avatar-init {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    box-shadow: 0 0 0 3px var(--navy), var(--shadow-md);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 2rem; font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* Title, handle, stats — right of avatar */
+  .ch-identity-info {
+    flex: 1;
+    min-width: 0;
+    padding-top: 6px;
+  }
+  .ch-title {
+    font-size: 1.45rem; font-weight: 800;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 5px;
+    word-break: break-word;
+  }
+  .ch-handle {
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--navy-60);
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+  .ch-stats-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    font-size: 0.82rem; font-weight: 600; color: var(--navy-60);
+    margin-bottom: 12px;
+  }
+  .ch-stats-row .dot {
+    width: 3px; height: 3px;
+    border-radius: 50%; background: var(--slate); flex-shrink: 0;
+  }
+  .ch-stats-row span {
+    white-space: nowrap;
+  }
+
+  /* Subscribe button aligned right */
+  .ch-subscribe-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 8px;
+    background: var(--navy); color: var(--cream);
+    font-family: var(--font); font-size: 0.8rem; font-weight: 800;
+    padding: 10px 24px; border-radius: var(--radius-full);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+  }
+  .ch-subscribe-btn:hover { background: #1e2437; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .ch-subscribe-btn.subscribed {
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+
+  /* Description below identity row */
+  .ch-desc {
+    font-size: 0.85rem; color: var(--navy-60);
+    line-height: 1.7;
+    padding: 14px 24px 20px;
+    max-width: 820px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Channel sub-tabs inside profile card */
+  .ch-tabs-bar {
     display: flex; gap: 0;
-    border-bottom: 1.5px solid var(--slate);
-    margin: 18px 0 24px;
+    border-top: 1.5px solid var(--slate);
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .channel-tabs-bar::-webkit-scrollbar { display: none; }
+  .ch-tabs-bar::-webkit-scrollbar { display: none; }
   .ch-tab-btn {
-    padding: 12px 24px;
+    padding: 14px 28px;
     font-family: var(--font); font-size: 0.875rem; font-weight: 700;
     color: var(--navy-60);
     border-bottom: 2.5px solid transparent;
     position: relative; bottom: -1.5px;
     white-space: nowrap;
-    transition: color var(--transition), border-color var(--transition);
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+    letter-spacing: 0.01em;
   }
-  .ch-tab-btn:hover { color: var(--navy); }
-  .ch-tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .ch-tab-btn:hover { color: var(--navy); background: var(--cream); }
+  .ch-tab-btn.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+    background: var(--cream);
+  }
 
+  /* Channel content area below profile card */
   .channel-content-area { min-height: 200px; }
 
   /* Playlist card */
@@ -903,16 +1005,28 @@
     .watch-title { font-size: 1rem; }
     .watch-channel-row { flex-wrap: wrap; gap: 10px; }
     .rec-thumb { width: 110px; }
-    .channel-banner { height: 120px; margin-bottom: -32px; }
-    .channel-page-avatar { width: 72px; height: 72px; border-width: 3px; }
-    .channel-header { padding: 0 12px; gap: 12px; }
-    .channel-header-info h1 { font-size: 1.1rem; }
-    .channel-header-desc { padding: 0 12px; }
+    /* Channel page mobile overrides */
     .channel-page { padding: 16px 12px 48px; }
+    .ch-banner-wrap { aspect-ratio: 3/1; }
+    .ch-identity-row { flex-direction: column; gap: 12px; padding: 16px 16px 0; align-items: flex-start; }
+    .ch-avatar-wrap { margin-top: -36px; }
+    .ch-avatar-img, .ch-avatar-init { width: 72px; height: 72px; font-size: 1.6rem; }
+    .ch-title { font-size: 1.15rem; }
+    .ch-identity-info { padding-top: 4px; }
+    .ch-desc { padding: 12px 16px 18px; font-size: 0.82rem; }
+    .ch-tab-btn { padding: 12px 18px; font-size: 0.8rem; }
+    .ch-subscribe-btn { padding: 9px 18px; font-size: 0.75rem; }
+    /* Watch page mobile */
     .watch-page { padding: 16px 12px 48px; }
     .watch-player-wrap { border-radius: var(--radius-md); }
     .category-bar { padding: 8px 12px; }
     .category-bar-wrap { top: 64px; }
+  }
+
+  @media (max-width: 480px) {
+    .ch-identity-row { gap: 10px; }
+    .ch-subscribe-btn { width: 100%; text-align: center; justify-content: center; margin-top: 4px; }
+    .ch-stats-row { gap: 6px; font-size: 0.76rem; }
   }
 </style>
 </head>
@@ -972,7 +1086,7 @@
 </header>
 
 <!-- ============================================================
-     CATEGORY TAGS BAR  (Upgrade 2)
+     CATEGORY TAGS BAR
 ============================================================ -->
 <div class="category-bar-wrap" id="categoryBarWrap">
   <div class="category-bar" id="categoryBar">
@@ -1003,7 +1117,7 @@
 </div>
 
 <!-- ============================================================
-     VIDEO WATCH PAGE  (Upgrade 1)
+     VIDEO WATCH PAGE
 ============================================================ -->
 <div class="watch-page" id="watchPage">
   <button class="watch-back-btn" id="watchBackBtn">
@@ -1062,7 +1176,7 @@
 </div>
 
 <!-- ============================================================
-     CHANNEL PAGE  (Upgrade 3)
+     CHANNEL PAGE
 ============================================================ -->
 <div class="channel-page" id="channelPage">
   <button class="back-btn" id="channelBackBtn">
@@ -1343,6 +1457,11 @@ function shareBtnSvg() {
 /* ============================================================
    CARD BUILDERS
 ============================================================ */
+
+/**
+ * buildVideoCard — canonical grid card used by home feed AND category feed.
+ * Strict 16:9 thumbnail, 2-line clamped title, contained meta section.
+ */
 function buildVideoCard(video, videoId) {
   const s = video.snippet || {}, st = video.statistics || {};
   const title = escapeHtml(s.title || 'Untitled');
@@ -1351,7 +1470,7 @@ function buildVideoCard(video, videoId) {
   const views = formatViews(st.viewCount);
   const date = timeAgo(s.publishedAt);
   const imgSrc = thumb(video);
-  const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
   return `
     <div class="video-card" data-videoid="${videoId}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
       <div class="thumb-wrap">
@@ -1372,9 +1491,50 @@ function buildVideoCard(video, videoId) {
         </div>
         <div class="card-meta">
           <div class="card-stats">
-            ${views?`<span>${views}</span>`:''}
-            ${views&&date?`<span class="dot"></span>`:''}
-            ${date?`<span>${date}</span>`:''}
+            ${views ? `<span>${views}</span>` : ''}
+            ${views && date ? `<span class="dot"></span>` : ''}
+            ${date ? `<span>${date}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * buildSearchVideoCard — identical template to buildVideoCard but accepts
+ * search result items where the video id lives at item.id.videoId.
+ * Used by category feed (search API) and search results grid.
+ */
+function buildSearchVideoCard(item) {
+  const videoId = item.id?.videoId || item.id || '';
+  const s = item.snippet || {};
+  const title = escapeHtml(s.title || 'Untitled');
+  const channel = escapeHtml(s.channelTitle || '');
+  const channelId = s.channelId || '';
+  const date = timeAgo(s.publishedAt);
+  const imgSrc = thumb(item);
+  const initial = (s.channelTitle || '?').trim().charAt(0).toUpperCase() || '?';
+  return `
+    <div class="video-card" data-videoid="${videoId}" data-title="${title}" tabindex="0" role="button" aria-label="Play ${title}">
+      <div class="thumb-wrap">
+        <img src="${imgSrc}" alt="${title}" loading="lazy" onerror="this.style.display='none'" />
+        <div class="play-overlay">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="rgba(49,56,81,0.85)"/>
+            <polygon points="10,8 18,12 10,16" fill="#F6F3ED"/>
+          </svg>
+        </div>
+        <button class="share-btn" data-videoid="${videoId}" data-title="${title}" aria-label="Share video" title="Share">${shareBtnSvg()}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${title}</div>
+        <div class="card-channel-row" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+          <span class="channel-avatar-mini" style="background:${avatarColor(channel)}">${initial}</span>
+          <span class="card-channel">${channel}</span>
+        </div>
+        <div class="card-meta">
+          <div class="card-stats">
+            ${date ? `<span>${date}</span>` : ''}
           </div>
         </div>
       </div>
@@ -1399,10 +1559,10 @@ function buildShortCard(item) {
       </div>
       <div class="short-overlay">
         <div class="short-title">${title}</div>
-        ${channel?`<div class="short-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
+        ${channel ? `<div class="short-channel" data-channelid="${channelId}" role="button" tabindex="0" aria-label="Open channel ${channel}">
           <span class="channel-avatar-mini sm" style="background:${avatarColor(channel)}">${initial}</span>
           <span>${channel}</span>
-        </div>`:''}
+        </div>` : ''}
       </div>
     </div>`;
 }
@@ -1417,7 +1577,7 @@ function buildChannelCard(item) {
       <img class="channel-avatar" src="${img}" alt="${name}" loading="lazy"
         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2272%22><rect width=%2272%22 height=%2272%22 fill=%22%23C2CBD3%22/></svg>'" />
       <div class="channel-name">${name}</div>
-      ${desc?`<div class="channel-desc">${desc}</div>`:''}
+      ${desc ? `<div class="channel-desc">${desc}</div>` : ''}
       <button class="subscribe-btn">Subscribe</button>
     </div>`;
 }
@@ -1443,7 +1603,7 @@ function buildResultRow(item) {
           <span>${channel}</span>
         </div>
         <div class="result-meta">${date}</div>
-        ${desc?`<div class="result-desc">${desc}</div>`:''}
+        ${desc ? `<div class="result-desc">${desc}</div>` : ''}
       </div>
     </div>`;
 }
@@ -1513,7 +1673,7 @@ function attachCardInteractions(root) {
 }
 
 /* ============================================================
-   VIEW MANAGER — show/hide sections cleanly
+   VIEW MANAGER
 ============================================================ */
 function showView(view) {
   viewStack = view;
@@ -1526,7 +1686,7 @@ function showView(view) {
 }
 
 /* ============================================================
-   CATEGORY TAGS BAR  (Upgrade 2)
+   CATEGORY TAGS BAR
 ============================================================ */
 function renderCategoryBar() {
   categoryBar.innerHTML = CATEGORIES.map(cat => `
@@ -1544,8 +1704,12 @@ function renderCategoryBar() {
   });
 }
 
+/* ============================================================
+   CATEGORY FEED — FIX 2: uses buildSearchVideoCard inside videos-grid
+   (identical card template + CSS class as the home feed)
+============================================================ */
 async function loadCategoryFeed(cat) {
-  // Reset to home tab
+  // Snap to home tab
   tabBtns.forEach(b => b.classList.remove('active'));
   tabBtns[0].classList.add('active');
   activeTab = 'home';
@@ -1558,8 +1722,11 @@ async function loadCategoryFeed(cat) {
     return;
   }
 
+  // Show skeleton grid matching home feed structure
   homeContent.innerHTML = `
-    <div class="section-title">🏷️ ${escapeHtml(cat)} <span>Loading…</span></div>
+    <div class="section-title-row">
+      <div class="section-title">🏷️ ${escapeHtml(cat)} <span>Loading…</span></div>
+    </div>
     <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>
     <div class="load-more-wrap" id="homeLoadMoreWrap"></div>`;
 
@@ -1568,13 +1735,20 @@ async function loadCategoryFeed(cat) {
     const data = await apiFetch(`${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video`);
     const items = data.items || [];
     homeNextPageToken = data.nextPageToken || null;
+
     if (!items.length) {
       homeContent.innerHTML = emptyHtml(`No results for "${cat}"`);
       return;
     }
+
     const grid = document.getElementById('homeGrid');
-    homeContent.querySelector('.section-title').innerHTML = `🏷️ ${escapeHtml(cat)} <span>${items.length} videos</span>`;
-    grid.innerHTML = items.map(v => buildResultRow(v)).join('');
+    const titleEl = homeContent.querySelector('.section-title');
+    if (titleEl) titleEl.innerHTML = `🏷️ ${escapeHtml(cat)} <span>${items.length} videos</span>`;
+
+    // ✅ Use buildSearchVideoCard (same visual template as home video cards)
+    // wrapped in the identical .videos-grid so cards never bleed outside
+    const videoItems = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId);
+    grid.innerHTML = videoItems.map(v => buildSearchVideoCard(v)).join('');
     attachCardInteractions(homeContent);
     renderHomeLoadMore();
     homeLoaded = true;
@@ -1584,7 +1758,7 @@ async function loadCategoryFeed(cat) {
 }
 
 /* ============================================================
-   VIDEO WATCH PAGE  (Upgrade 1)
+   VIDEO WATCH PAGE
 ============================================================ */
 async function openWatchPage(videoId, titleHint) {
   watchVideoId = videoId;
@@ -1619,7 +1793,6 @@ async function openWatchPage(videoId, titleHint) {
   watchLikeCount.textContent = 'Like';
 
   try {
-    // Fetch video details + recommendations in parallel
     const [vidData, recData] = await Promise.all([
       apiFetch(`${BASE}/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}`),
       apiFetch(`${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(videoId)}&type=video`)
@@ -1638,7 +1811,6 @@ async function openWatchPage(videoId, titleHint) {
       ).join('');
       watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
 
-      // Channel row
       const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
       const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
       watchChannelRow.innerHTML = `
@@ -1649,7 +1821,6 @@ async function openWatchPage(videoId, titleHint) {
         </div>
         <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
 
-      // Fetch channel subs async
       if (channelId) {
         apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
           const st2 = ch.items && ch.items[0] && ch.items[0].statistics;
@@ -1657,7 +1828,6 @@ async function openWatchPage(videoId, titleHint) {
           const el = document.getElementById('watchChSubs');
           if (el) el.textContent = subs ? subs + ' subscribers' : '';
 
-          // Try to get actual avatar
           const avatarUrl = ch.items&&ch.items[0]&&ch.items[0].snippet?.thumbnails?.high?.url;
           if (avatarUrl) {
             const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
@@ -1671,7 +1841,6 @@ async function openWatchPage(videoId, titleHint) {
         }).catch(()=>{});
       }
 
-      // Subscribe button toggle
       const subBtn = document.getElementById('watchSubBtn');
       if (subBtn) {
         let subscribed = false;
@@ -1684,7 +1853,6 @@ async function openWatchPage(videoId, titleHint) {
         });
       }
 
-      // Channel name click → channel page
       const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
       if (chNameEl) {
         chNameEl.addEventListener('click', e => {
@@ -1694,7 +1862,6 @@ async function openWatchPage(videoId, titleHint) {
       }
     }
 
-    // Recommendations
     const recItems = (recData.items||[]).filter(i => i.id?.videoId);
     if (recItems.length) {
       watchRecList.innerHTML = recItems.map(buildRecCard).join('');
@@ -1744,19 +1911,35 @@ watchBackBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   CHANNEL PAGE  (Upgrade 3)
+   CHANNEL PAGE — FIX 1: clean stacked layout, no banner overlap issues
 ============================================================ */
 function channelSkeletonHtml() {
   return `
-    <div class="channel-banner-skeleton skeleton"></div>
-    <div class="channel-header">
-      <div class="skeleton" style="width:100px;height:100px;border-radius:50%;flex-shrink:0;"></div>
-      <div class="channel-header-info">
-        <div class="skeleton skeleton-line w60" style="height:20px;width:220px;margin-bottom:10px;"></div>
-        <div class="skeleton skeleton-line w40" style="height:13px;width:140px;"></div>
+    <div class="ch-profile-card">
+      <div class="ch-banner-wrap">
+        <div class="ch-banner-placeholder skeleton"></div>
+      </div>
+      <div class="ch-identity-row">
+        <div class="ch-avatar-wrap">
+          <div class="skeleton" style="width:88px;height:88px;border-radius:50%;"></div>
+        </div>
+        <div class="ch-identity-info">
+          <div class="skeleton skeleton-line w60" style="height:22px;width:220px;margin-bottom:10px;"></div>
+          <div class="skeleton skeleton-line w40" style="height:13px;width:140px;margin-bottom:8px;"></div>
+          <div class="skeleton skeleton-line w40" style="height:12px;width:180px;"></div>
+        </div>
+      </div>
+      <div style="padding:14px 24px 20px;">
+        <div class="skeleton skeleton-line w80" style="height:11px;margin-bottom:6px;"></div>
+        <div class="skeleton skeleton-line w60" style="height:11px;"></div>
+      </div>
+      <div class="ch-tabs-bar" style="padding:0 4px;">
+        ${['Home','Videos','Shorts','Playlists'].map(t => `
+          <div class="ch-tab-btn" style="color:var(--slate);">${t}</div>
+        `).join('')}
       </div>
     </div>
-    <div class="videos-grid" style="margin-top:24px;">${buildVideoSkeletons(12)}</div>`;
+    <div class="videos-grid" style="margin-top:24px;">${buildVideoSkeletons(8)}</div>`;
 }
 
 async function openChannelPage(channelId) {
@@ -1779,43 +1962,94 @@ async function openChannelPage(channelId) {
 
 function renderChannelShell(ch, channelId) {
   const sn = ch.snippet||{}, st = ch.statistics||{};
-  const branding = (ch.brandingSettings&&ch.brandingSettings.image)||{};
-  let bannerUrl = branding.bannerExternalUrl||'';
+  const branding = (ch.brandingSettings && ch.brandingSettings.image) || {};
+
+  // Banner URL — YouTube banner with landscape crop parameter
+  let bannerUrl = branding.bannerExternalUrl || '';
   if (bannerUrl) bannerUrl += '=w1280-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj';
-  const avatar = sn.thumbnails?.high?.url||sn.thumbnails?.medium?.url||sn.thumbnails?.default?.url||'';
-  const title = escapeHtml(sn.title||'Channel');
-  const handle = sn.customUrl ? escapeHtml('@'+sn.customUrl.replace(/^@/,'')) : '';
-  const desc = escapeHtml(sn.description||'');
-  const subCount = st.hiddenSubscriberCount ? 'Subscribers hidden'
-    : (formatCount(st.subscriberCount) ? formatCount(st.subscriberCount)+' subscribers' : '');
-  const videoCount = formatCount(st.videoCount) ? formatCount(st.videoCount)+' videos' : '';
+
+  const avatarUrl = sn.thumbnails?.high?.url || sn.thumbnails?.medium?.url || sn.thumbnails?.default?.url || '';
+  const title = escapeHtml(sn.title || 'Channel');
+  const handle = sn.customUrl ? escapeHtml('@' + sn.customUrl.replace(/^@/, '')) : '';
+  const desc = escapeHtml(sn.description || '');
+  const subCount = st.hiddenSubscriberCount
+    ? 'Subscribers hidden'
+    : (formatCount(st.subscriberCount) ? formatCount(st.subscriberCount) + ' subscribers' : '');
+  const videoCount = formatCount(st.videoCount) ? formatCount(st.videoCount) + ' videos' : '';
+  const initial = title.charAt(0).toUpperCase() || '?';
+  const avatarColor2 = avatarColor(sn.title || '');
+
+  // Avatar: image if available, else colored initial circle
+  const avatarHtml = avatarUrl
+    ? `<img class="ch-avatar-img" src="${avatarUrl}" alt="${title}"
+         onerror="this.outerHTML='<div class=\\'ch-avatar-init\\' style=\\'background:${avatarColor2};\\'>${initial}</div>'" />`
+    : `<div class="ch-avatar-init" style="background:${avatarColor2};">${initial}</div>`;
+
+  // Stats row — only render populated items
+  const statsItems = [subCount, videoCount].filter(Boolean);
+  const statsHtml = statsItems.map((item, i) =>
+    `<span>${escapeHtml(item)}</span>${i < statsItems.length - 1 ? '<span class="dot"></span>' : ''}`
+  ).join('');
 
   channelPageContent.innerHTML = `
-    <div class="channel-banner" style="${bannerUrl?`background-image:url('${bannerUrl}')`:''};"></div>
-    <div class="channel-header">
-      <img class="channel-page-avatar" src="${avatar}" alt="${title}" onerror="this.style.visibility='hidden'" />
-      <div class="channel-header-info">
-        <h1>${title}</h1>
-        ${handle?`<div class="channel-handle">${handle}</div>`:''}
-        <div class="channel-header-stats">
-          ${subCount?`<span>${subCount}</span>`:''}
-          ${subCount&&videoCount?`<span class="dot"></span>`:''}
-          ${videoCount?`<span>${videoCount}</span>`:''}
-        </div>
+    <div class="ch-profile-card">
+
+      <!-- 1. Banner — full width, clean 4:1 aspect, no text overlap -->
+      <div class="ch-banner-wrap">
+        ${bannerUrl
+          ? `<img src="${bannerUrl}" alt="${title} banner" onerror="this.outerHTML='<div class=\\'ch-banner-placeholder\\'></div>'" />`
+          : `<div class="ch-banner-placeholder"></div>`}
       </div>
+
+      <!-- 2. Avatar + Identity + Subscribe -->
+      <div class="ch-identity-row">
+        <div class="ch-avatar-wrap">
+          ${avatarHtml}
+        </div>
+        <div class="ch-identity-info">
+          <div class="ch-title">${title}</div>
+          ${handle ? `<div class="ch-handle">${handle}</div>` : ''}
+          ${statsHtml ? `<div class="ch-stats-row">${statsHtml}</div>` : ''}
+        </div>
+        <button class="ch-subscribe-btn" id="chSubBtn">Subscribe</button>
+      </div>
+
+      <!-- 3. Description -->
+      ${desc ? `<p class="ch-desc">${desc}</p>` : ''}
+
+      <!-- 4. Navigation tabs -->
+      <div class="ch-tabs-bar" id="chTabsBar">
+        ${['home','videos','shorts','playlists'].map(t => `
+          <button class="ch-tab-btn${t === 'home' ? ' active' : ''}" data-chtab="${t}">
+            ${t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        `).join('')}
+      </div>
+
     </div>
-    ${desc?`<p class="channel-header-desc">${desc}</p>`:''}
-    <div class="channel-tabs-bar" id="chTabsBar">
-      ${['home','videos','shorts','playlists'].map(t=>`
-        <button class="ch-tab-btn${t==='home'?' active':''}" data-chtab="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>
-      `).join('')}
-    </div>
-    <div class="channel-content-area" id="chContentArea">${buildVideoSkeletons(8)}</div>`;
+
+    <!-- 5. Content area below card -->
+    <div class="channel-content-area" id="chContentArea" style="margin-top:24px;">
+      <div class="videos-grid">${buildVideoSkeletons(8)}</div>
+    </div>`;
+
+  // Subscribe toggle
+  const subBtn = document.getElementById('chSubBtn');
+  if (subBtn) {
+    let subscribed = false;
+    subBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      subscribed = !subscribed;
+      subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
+      subBtn.classList.toggle('subscribed', subscribed);
+      showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
+    });
+  }
 
   // Tab click events
   channelPageContent.querySelectorAll('.ch-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      channelPageContent.querySelectorAll('.ch-tab-btn').forEach(b=>b.classList.remove('active'));
+      channelPageContent.querySelectorAll('.ch-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeChTab = btn.dataset.chtab;
       loadChannelTab(activeChTab, channelId, sn);
@@ -1828,10 +2062,10 @@ async function loadChannelTab(tab, channelId, sn) {
   if (!area) return;
 
   if (tab === 'playlists') {
-    area.innerHTML = buildVideoSkeletons(6);
+    area.innerHTML = `<div class="videos-grid">${buildVideoSkeletons(6)}</div>`;
     try {
       const data = await apiFetch(`${BASE}/playlists?part=snippet,contentDetails&channelId=${encodeURIComponent(channelId)}&maxResults=10`);
-      const items = data.items||[];
+      const items = data.items || [];
       if (!items.length) { area.innerHTML = emptyHtml('No playlists found.'); return; }
       const cards = items.map(pl => {
         const ps = pl.snippet||{}, count = pl.contentDetails?.itemCount||0;
@@ -1857,19 +2091,26 @@ async function loadChannelTab(tab, channelId, sn) {
     return;
   }
 
-  // home, videos, shorts
-  area.innerHTML = `<div class="videos-grid">${buildVideoSkeletons(8)}</div>`;
+  // home, videos, shorts — use skeleton matching expected layout
+  if (tab === 'shorts') {
+    area.innerHTML = `<div class="shorts-grid">${buildShortSkeletons(8)}</div>`;
+  } else {
+    area.innerHTML = `<div class="videos-grid">${buildVideoSkeletons(8)}</div>`;
+  }
+
   let url = `${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=15&type=video&order=date`;
   if (tab === 'shorts') url += '&videoDuration=short&q=shorts';
 
   try {
     const data = await apiFetch(url);
-    const items = data.items||[];
+    const items = data.items || [];
     if (!items.length) { area.innerHTML = emptyHtml('No videos found.'); return; }
+
     if (tab === 'shorts') {
       area.innerHTML = `<div class="shorts-grid">${items.map(buildShortCard).join('')}</div>`;
     } else {
-      area.innerHTML = `<div class="videos-grid">${items.map(v => buildResultRow(v)).join('')}</div>`;
+      // Use buildSearchVideoCard to keep consistent grid card layout on channel page
+      area.innerHTML = `<div class="videos-grid">${items.map(v => buildSearchVideoCard(v)).join('')}</div>`;
     }
     attachCardInteractions(area);
   } catch(err) { area.innerHTML = errorHtml(err.message); }
@@ -1910,8 +2151,8 @@ async function loadHome(opts = {}) {
     let url = `${BASE}/videos?part=snippet,statistics&${variant.params}&maxResults=12`;
     if (append && homeNextPageToken) url += `&pageToken=${encodeURIComponent(homeNextPageToken)}`;
     const data = await apiFetch(url);
-    const items = data.items||[];
-    homeNextPageToken = data.nextPageToken||null;
+    const items = data.items || [];
+    homeNextPageToken = data.nextPageToken || null;
     if (!items.length && !append) { grid.innerHTML = emptyHtml('No trending videos found.'); renderHomeLoadMore(); return; }
     const cards = items.map(v => buildVideoCard(v, v.id)).join('');
     if (append) grid.insertAdjacentHTML('beforeend', cards);
@@ -1965,8 +2206,8 @@ async function loadShorts(opts = {}) {
     let url = `${BASE}/search?part=snippet&maxResults=16&q=shorts&type=video&videoDuration=short`;
     if (append && shortsNextPageToken) url += `&pageToken=${encodeURIComponent(shortsNextPageToken)}`;
     const data = await apiFetch(url);
-    const items = data.items||[];
-    shortsNextPageToken = data.nextPageToken||null;
+    const items = data.items || [];
+    shortsNextPageToken = data.nextPageToken || null;
     if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); renderShortsLoadMore(); return; }
     const cards = items.map(buildShortCard).join('');
     if (append) grid.insertAdjacentHTML('beforeend', cards);
@@ -1998,7 +2239,6 @@ function renderShortsLoadMore() {
 async function doSearch(query) {
   if (!query.trim()) return;
 
-  // Reset category to All
   activeCategory = 'All';
   renderCategoryBar();
 
@@ -2012,21 +2252,21 @@ async function doSearch(query) {
 
   container.innerHTML = `
     <div class="section-title">🔍 Results for "${escapeHtml(query)}"</div>
-    <div class="${isShorts?'shorts-grid':'mixed-grid'}">${isShorts?buildShortSkeletons(16):buildVideoSkeletons(8)}</div>`;
+    <div class="${isShorts ? 'shorts-grid' : 'mixed-grid'}">${isShorts ? buildShortSkeletons(16) : buildVideoSkeletons(8)}</div>`;
 
   try {
     const data = await apiFetch(url);
-    const items = data.items||[];
+    const items = data.items || [];
     if (!items.length) { container.innerHTML = emptyHtml(`No results for "${query}"`); return; }
 
     if (isShorts) {
-      const cards = items.filter(i=>i.id?.kind==='youtube#video').map(buildShortCard).join('');
+      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
       container.innerHTML = `
         <div class="section-title">🔍 Shorts for "${escapeHtml(query)}" <span>${items.length}</span></div>
-        <div class="shorts-grid">${cards||emptyHtml('No matching shorts.')}</div>`;
+        <div class="shorts-grid">${cards || emptyHtml('No matching shorts.')}</div>`;
     } else {
-      const channels = items.filter(i=>i.id?.kind==='youtube#channel');
-      const videos   = items.filter(i=>i.id?.kind!=='youtube#channel');
+      const channels = items.filter(i => i.id?.kind === 'youtube#channel');
+      const videos   = items.filter(i => i.id?.kind !== 'youtube#channel');
       let html = `<div class="section-title">🔍 Results for "${escapeHtml(query)}" <span>${items.length} results</span></div>`;
       if (channels.length) {
         html += `<div class="section-title" style="margin-top:8px;font-size:0.85rem;color:var(--navy-60);">Channels</div>
@@ -2047,10 +2287,10 @@ async function doSearch(query) {
 ============================================================ */
 tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    tabBtns.forEach(b=>b.classList.remove('active'));
+    tabBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.getElementById(`tab-${activeTab}`).classList.add('active');
     if (activeTab === 'shorts' && !shortsLoaded) loadShorts();
     if (activeTab === 'home' && !homeLoaded) loadHome();
