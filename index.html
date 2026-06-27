@@ -216,19 +216,18 @@
   @keyframes spin360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   /* ============================================================
-     LOAD MORE
+     INFINITE SCROLL SENTINEL / SPINNER
   ============================================================ */
-  .load-more-wrap { display: flex; justify-content: center; margin-top: 32px; }
-  .load-more-btn {
-    padding: 13px 38px;
-    background: var(--navy); color: var(--white);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em;
-    box-shadow: var(--shadow-sm);
-    transition: background var(--transition), transform var(--transition);
+  .scroll-spinner {
+    display: flex; justify-content: center; align-items: center;
+    padding: 32px 0; gap: 10px;
+    color: var(--navy-60); font-size: 0.82rem; font-weight: 600;
   }
-  .load-more-btn:hover { background: #1e2437; transform: translateY(-2px); }
-  .load-more-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+  .scroll-spinner svg {
+    width: 22px; height: 22px;
+    animation: spin360 0.8s linear infinite;
+    color: var(--navy);
+  }
 
   /* ============================================================
      GRID LAYOUTS
@@ -772,7 +771,7 @@
   .watch-back-btn svg { width: 16px; height: 16px; }
 
   /* ============================================================
-     CHANNEL PAGE  — FIX 1: Complete overhaul for clean stacked layout
+     CHANNEL PAGE
   ============================================================ */
   .channel-page {
     display: none;
@@ -795,7 +794,6 @@
   .back-btn:hover { border-color: var(--navy); transform: translateX(-2px); background: var(--cream); }
   .back-btn svg { width: 16px; height: 16px; }
 
-  /* Channel profile card wrapper — clean stacked block, no overlap tricks */
   .ch-profile-card {
     background: var(--white);
     border-radius: var(--radius-lg);
@@ -804,7 +802,6 @@
     margin-bottom: 24px;
   }
 
-  /* Banner: full-width, strict 4:1 aspect, no padding, clean crop */
   .ch-banner-wrap {
     width: 100%;
     aspect-ratio: 4/1;
@@ -822,7 +819,6 @@
     background: linear-gradient(135deg, var(--navy) 0%, #4a5680 60%, #6372a0 100%);
   }
 
-  /* Avatar + identity row below banner */
   .ch-identity-row {
     display: flex;
     align-items: flex-start;
@@ -830,10 +826,9 @@
     padding: 20px 24px 0;
   }
 
-  /* Round avatar with thick border */
   .ch-avatar-wrap {
     flex-shrink: 0;
-    margin-top: -40px; /* lift avatar to overlap banner bottom edge slightly */
+    margin-top: -40px;
     position: relative;
     z-index: 2;
   }
@@ -856,7 +851,6 @@
     flex-shrink: 0;
   }
 
-  /* Title, handle, stats — right of avatar */
   .ch-identity-info {
     flex: 1;
     min-width: 0;
@@ -884,11 +878,8 @@
     width: 3px; height: 3px;
     border-radius: 50%; background: var(--slate); flex-shrink: 0;
   }
-  .ch-stats-row span {
-    white-space: nowrap;
-  }
+  .ch-stats-row span { white-space: nowrap; }
 
-  /* Subscribe button aligned right */
   .ch-subscribe-btn {
     flex-shrink: 0;
     align-self: flex-start;
@@ -907,7 +898,6 @@
     border: 1.5px solid var(--navy);
   }
 
-  /* Description below identity row */
   .ch-desc {
     font-size: 0.85rem; color: var(--navy-60);
     line-height: 1.7;
@@ -917,7 +907,6 @@
     overflow: hidden;
   }
 
-  /* Channel sub-tabs inside profile card */
   .ch-tabs-bar {
     display: flex; gap: 0;
     border-top: 1.5px solid var(--slate);
@@ -942,7 +931,6 @@
     background: var(--cream);
   }
 
-  /* Channel content area below profile card */
   .channel-content-area { min-height: 200px; }
 
   /* Playlist card */
@@ -1005,7 +993,6 @@
     .watch-title { font-size: 1rem; }
     .watch-channel-row { flex-wrap: wrap; gap: 10px; }
     .rec-thumb { width: 110px; }
-    /* Channel page mobile overrides */
     .channel-page { padding: 16px 12px 48px; }
     .ch-banner-wrap { aspect-ratio: 3/1; }
     .ch-identity-row { flex-direction: column; gap: 12px; padding: 16px 16px 0; align-items: flex-start; }
@@ -1016,7 +1003,6 @@
     .ch-desc { padding: 12px 16px 18px; font-size: 0.82rem; }
     .ch-tab-btn { padding: 12px 18px; font-size: 0.8rem; }
     .ch-subscribe-btn { padding: 9px 18px; font-size: 0.75rem; }
-    /* Watch page mobile */
     .watch-page { padding: 16px 12px 48px; }
     .watch-player-wrap { border-radius: var(--radius-md); }
     .category-bar { padding: 8px 12px; }
@@ -1077,8 +1063,6 @@
       </button>
     </div>
   </div>
-
-  <!-- HOME / SHORTS TABS -->
   <nav class="tabs-nav" role="tablist" id="tabsNav">
     <button class="tab-btn active" data-tab="home" role="tab">🏠 Home</button>
     <button class="tab-btn" data-tab="shorts" role="tab">⚡ Shorts</button>
@@ -1089,9 +1073,7 @@
      CATEGORY TAGS BAR
 ============================================================ -->
 <div class="category-bar-wrap" id="categoryBarWrap">
-  <div class="category-bar" id="categoryBar">
-    <!-- Pills injected by JS -->
-  </div>
+  <div class="category-bar" id="categoryBar"></div>
 </div>
 
 <!-- ============================================================
@@ -1126,15 +1108,10 @@
     </svg>
     Back
   </button>
-
-  <!-- Player -->
   <div class="watch-player-wrap" id="watchPlayerWrap"></div>
-
-  <!-- Title + stats -->
   <div class="watch-meta-block" id="watchMetaBlock">
     <div class="watch-title" id="watchTitle"></div>
     <div class="watch-stats-row" id="watchStatsRow"></div>
-    <!-- Action Bar -->
     <div class="watch-action-bar" id="watchActionBar">
       <button class="watch-action-btn" id="watchLikeBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1166,11 +1143,7 @@
       </button>
     </div>
   </div>
-
-  <!-- Channel row -->
   <div class="watch-channel-row" id="watchChannelRow"></div>
-
-  <!-- Recommendations -->
   <div class="watch-rec-title">Up Next</div>
   <div class="watch-rec-list" id="watchRecList"></div>
 </div>
@@ -1204,40 +1177,48 @@ const BASE = 'https://www.googleapis.com/youtube/v3';
 
 /* ============================================================
    STATE
+
+   viewMode: 'home' | 'category' | 'search' | 'shorts' | 'channel'
+   globalNextPageToken: single shared token for infinite scroll
+   scrollFetching: guard to prevent concurrent scroll fetches
 ============================================================ */
-let activeTab = 'home';
-let homeLoaded = false;
-let shortsLoaded = false;
-let homeNextPageToken = null;
-let shortsNextPageToken = null;
-let toastTimer = null;
-let activeCategory = 'All';
+let activeTab       = 'home';
+let homeLoaded      = false;
+let shortsLoaded    = false;
+let activeCategory  = 'All';
+let viewMode        = 'home';   // tracks what infinite scroll should fetch next
+let globalNextPageToken = null; // FIX 2: single global token for infinite scroll
+let scrollFetching  = false;    // FIX 2: debounce guard
+let toastTimer      = null;
+
+// Randomised home feed state (FIX 1)
+let homePageOffset  = 0; // used to randomise offset on each refresh
+
+// Search state
+let lastSearchQuery = '';
+
+// Channel page state (FIX 4)
+let activeChannelId  = null;
+let activeChTab      = 'home';
+let channelScrollCtx = null; // { channelId, tab } — so scroll knows what to load
 
 // Watch page state
-let watchVideoId = null;
-let watchLiked = false;
-let watchDisliked = false;
+let watchVideoId   = null;
+let watchLiked     = false;
+let watchDisliked  = false;
 
-// Channel page state
-let activeChannelId = null;
-let activeChTab = 'home';
-
-// View stack: 'main' | 'watch' | 'channel'
+// View stack
 let viewStack = 'main';
 
 const CATEGORIES = ['All','Website','Music','APIs','Gaming','Hyped','Server','Movies','Tech'];
 
-const FEED_VARIANTS = [
-  { label: 'Trending in India',       params: 'chart=mostPopular&regionCode=IN' },
-  { label: 'Trending in the US',      params: 'chart=mostPopular&regionCode=US' },
-  { label: 'Trending in the UK',      params: 'chart=mostPopular&regionCode=GB' },
-  { label: 'Trending in Japan',       params: 'chart=mostPopular&regionCode=JP' },
-  { label: 'Trending in Brazil',      params: 'chart=mostPopular&regionCode=BR' },
-  { label: 'Trending in South Korea', params: 'chart=mostPopular&regionCode=KR' },
-  { label: 'Trending in Germany',     params: 'chart=mostPopular&regionCode=DE' },
-  { label: 'Trending in Australia',   params: 'chart=mostPopular&regionCode=AU' },
+// FIX 1: India-only random query pool for refresh randomisation
+const INDIA_RANDOM_QUERIES = [
+  'viral india','bollywood','cricket india','trending india',
+  'indian music','web series hindi','desi comedy','india vlog',
+  'indian street food','tollywood','kollywood','punjabi music',
+  'indian tech','stand up comedy india','india travel'
 ];
-let currentFeedIndex = 0;
 
 /* ============================================================
    DOM REFS
@@ -1349,6 +1330,17 @@ function avatarColor(name) {
   for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) % 360;
   return `hsl(${Math.abs(hash)},42%,38%)`;
 }
+function shuffle(arr) {
+  // Fisher-Yates in-place shuffle, returns arr
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 async function apiFetch(url) {
   const sep = url.includes('?') ? '&' : '?';
   const res = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY));
@@ -1405,6 +1397,14 @@ function emptyHtml(msg = 'Nothing found.') {
     <p>Try a different search term or check back later.</p>
   </div>`;
 }
+function spinnerHtml() {
+  return `<div class="scroll-spinner" id="scrollSpinner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    Loading more…
+  </div>`;
+}
 
 /* ============================================================
    TOAST
@@ -1459,8 +1459,8 @@ function shareBtnSvg() {
 ============================================================ */
 
 /**
- * buildVideoCard — canonical grid card used by home feed AND category feed.
- * Strict 16:9 thumbnail, 2-line clamped title, contained meta section.
+ * buildVideoCard — canonical grid card for mostPopular API items
+ * (id is a plain string, statistics available)
  */
 function buildVideoCard(video, videoId) {
   const s = video.snippet || {}, st = video.statistics || {};
@@ -1501,9 +1501,8 @@ function buildVideoCard(video, videoId) {
 }
 
 /**
- * buildSearchVideoCard — identical template to buildVideoCard but accepts
- * search result items where the video id lives at item.id.videoId.
- * Used by category feed (search API) and search results grid.
+ * buildSearchVideoCard — identical template for search API items
+ * (id lives at item.id.videoId, no statistics)
  */
 function buildSearchVideoCard(item) {
   const videoId = item.id?.videoId || item.id || '';
@@ -1705,9 +1704,250 @@ function renderCategoryBar() {
 }
 
 /* ============================================================
-   CATEGORY FEED — FIX 2: uses buildSearchVideoCard inside videos-grid
-   (identical card template + CSS class as the home feed)
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 2: GLOBAL INFINITE SCROLL ENGINE                   ║
+   ╚══════════════════════════════════════════════════════════╝
+   A single window scroll listener routes to the correct
+   fetch handler based on `viewMode`. It uses `globalNextPageToken`
+   and the `scrollFetching` guard to prevent duplicate calls.
 ============================================================ */
+function showScrollSpinner(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  // Remove existing spinner if any
+  const old = document.getElementById('scrollSpinner');
+  if (old) old.remove();
+  grid.insertAdjacentHTML('afterend', spinnerHtml());
+}
+function hideScrollSpinner() {
+  const el = document.getElementById('scrollSpinner');
+  if (el) el.remove();
+}
+
+async function infiniteScrollFetch() {
+  if (scrollFetching || !globalNextPageToken) return;
+  scrollFetching = true;
+
+  switch (viewMode) {
+    case 'home':
+      await appendHomeFeed();
+      break;
+    case 'category':
+      await appendCategoryFeed();
+      break;
+    case 'search':
+      await appendSearchFeed();
+      break;
+    case 'shorts':
+      await appendShortsFeed();
+      break;
+    case 'channel':
+      await appendChannelFeed();
+      break;
+  }
+
+  scrollFetching = false;
+}
+
+window.addEventListener('scroll', () => {
+  // Only trigger when the main feed is visible and there is more to load
+  if (viewStack !== 'main' && viewMode !== 'channel') return;
+  if (viewMode === 'channel' && viewStack !== 'channel') return;
+  if (!globalNextPageToken || scrollFetching) return;
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+    infiniteScrollFetch();
+  }
+}, { passive: true });
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 1: HOME FEED — India-only, randomised on refresh   ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Always uses regionCode=IN
+   - On initial load: fetches mostPopular, shuffles the items array
+   - On Refresh: uses a random query from INDIA_RANDOM_QUERIES
+     for a completely fresh, unexpected batch every time
+   - No country badges anywhere
+============================================================ */
+let homeIsRandomQuery = false; // tracks if current home feed is query-based
+let homeCurrentQuery  = '';    // used for append when query-based
+
+async function loadHome(opts = {}) {
+  const append = !!opts.append;
+  viewMode = 'home';
+
+  if (!append) {
+    globalNextPageToken = null;
+    homeIsRandomQuery = false;
+    homeCurrentQuery  = '';
+    homeContent.innerHTML = `
+      <div class="section-title-row">
+        <div class="section-title">🔥 Trending</div>
+        <button class="refresh-btn" id="refreshFeedBtn" title="Refresh feed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span class="refresh-label">Refresh Feed</span>
+        </button>
+      </div>
+      <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
+    document.getElementById('refreshFeedBtn').addEventListener('click', refreshFeed);
+  }
+
+  const grid = document.getElementById('homeGrid');
+  try {
+    let url = `${BASE}/videos?part=snippet,statistics&chart=mostPopular&regionCode=IN&maxResults=20`;
+    if (append && globalNextPageToken) {
+      if (homeIsRandomQuery) {
+        // append mode for a random query — use search endpoint
+        url = `${BASE}/search?part=snippet&maxResults=20&q=${encodeURIComponent(homeCurrentQuery)}&type=video&regionCode=IN`;
+        if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+      } else {
+        if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+      }
+    }
+
+    const data = await apiFetch(url);
+    let items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+
+    if (!items.length && !append) {
+      grid.innerHTML = emptyHtml('No trending videos found.');
+      return;
+    }
+
+    // FIX 1: shuffle on first load for variety
+    if (!append) shuffle(items);
+
+    let cards;
+    if (homeIsRandomQuery) {
+      cards = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId)
+                   .map(v => buildSearchVideoCard(v)).join('');
+    } else {
+      cards = items.map(v => buildVideoCard(v, v.id)).join('');
+    }
+
+    if (append) { hideScrollSpinner(); grid.insertAdjacentHTML('beforeend', cards); }
+    else grid.innerHTML = cards;
+
+    attachCardInteractions(homeContent);
+    homeLoaded = true;
+  } catch(err) {
+    hideScrollSpinner();
+    if (append) showToast('Could not load more videos.');
+    else homeContent.innerHTML = errorHtml(err.message);
+  }
+}
+
+async function appendHomeFeed() {
+  const grid = document.getElementById('homeGrid');
+  if (!grid) return;
+  showScrollSpinner('homeGrid');
+  await loadHome({ append: true });
+}
+
+// FIX 1: Refresh randomly — picks from India query pool for a fresh batch
+function refreshFeed() {
+  const btn = document.getElementById('refreshFeedBtn');
+  if (btn) btn.classList.add('spinning');
+
+  activeCategory = 'All';
+  renderCategoryBar();
+  viewMode = 'home';
+  globalNextPageToken = null;
+  scrollFetching = false;
+
+  // Pick a random Indian query for a completely fresh batch
+  const randomQ = randomChoice(INDIA_RANDOM_QUERIES);
+  homeIsRandomQuery = true;
+  homeCurrentQuery  = randomQ;
+
+  homeContent.innerHTML = `
+    <div class="section-title-row">
+      <div class="section-title">🔥 Trending</div>
+      <button class="refresh-btn spinning" id="refreshFeedBtn" title="Refresh feed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span class="refresh-label">Refresh Feed</span>
+      </button>
+    </div>
+    <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
+  document.getElementById('refreshFeedBtn').addEventListener('click', refreshFeed);
+
+  const grid = document.getElementById('homeGrid');
+  apiFetch(`${BASE}/search?part=snippet&maxResults=20&q=${encodeURIComponent(randomQ)}&type=video&regionCode=IN`)
+    .then(data => {
+      const items = data.items || [];
+      globalNextPageToken = data.nextPageToken || null;
+      shuffle(items);
+      if (!items.length) { grid.innerHTML = emptyHtml('No videos found.'); return; }
+      const cards = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId)
+                         .map(v => buildSearchVideoCard(v)).join('');
+      grid.innerHTML = cards;
+      attachCardInteractions(homeContent);
+      homeLoaded = true;
+    })
+    .catch(err => { grid.innerHTML = errorHtml(err.message); })
+    .finally(() => {
+      const b = document.getElementById('refreshFeedBtn');
+      if (b) setTimeout(() => b.classList.remove('spinning'), 100);
+    });
+}
+
+/* ============================================================
+   SHORTS LOADER
+============================================================ */
+async function loadShorts(opts = {}) {
+  const append = !!opts.append;
+  viewMode = 'shorts';
+
+  if (!append) {
+    globalNextPageToken = null;
+    shortsContent.innerHTML = `
+      <div class="section-title-row"><div class="section-title">⚡ Shorts</div></div>
+      <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>`;
+  }
+  const grid = document.getElementById('shortsGrid');
+  try {
+    let url = `${BASE}/search?part=snippet&maxResults=20&q=shorts&type=video&videoDuration=short&regionCode=IN`;
+    if (append && globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); return; }
+    const cards = items.map(buildShortCard).join('');
+    if (append) { hideScrollSpinner(); grid.insertAdjacentHTML('beforeend', cards); }
+    else grid.innerHTML = cards;
+    attachCardInteractions(shortsContent);
+    shortsLoaded = true;
+  } catch(err) {
+    hideScrollSpinner();
+    if (append) showToast('Could not load more shorts.');
+    else shortsContent.innerHTML = errorHtml(err.message);
+  }
+}
+
+async function appendShortsFeed() {
+  const grid = document.getElementById('shortsGrid');
+  if (!grid) return;
+  showScrollSpinner('shortsGrid');
+  await loadShorts({ append: true });
+}
+
+/* ============================================================
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 3: CATEGORY FEED — infinite scroll ready           ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Uses YouTube Search endpoint with regionCode=IN
+   - Resets globalNextPageToken, wipes grid once
+   - Passes returned token to the global infinite scroll listener
+   - Appended cards use identical .video-card template (buildSearchVideoCard)
+============================================================ */
+let activeCategoryName = '';
+
 async function loadCategoryFeed(cat) {
   // Snap to home tab
   tabBtns.forEach(b => b.classList.remove('active'));
@@ -1718,23 +1958,33 @@ async function loadCategoryFeed(cat) {
 
   if (cat === 'All') {
     homeLoaded = false;
+    globalNextPageToken = null;
+    scrollFetching = false;
+    viewMode = 'home';
+    homeIsRandomQuery = false;
+    homeCurrentQuery = '';
     loadHome();
     return;
   }
 
-  // Show skeleton grid matching home feed structure
+  // FIX 3: set global view mode + reset token
+  viewMode = 'category';
+  activeCategoryName = cat;
+  globalNextPageToken = null;
+  scrollFetching = false;
+
   homeContent.innerHTML = `
     <div class="section-title-row">
       <div class="section-title">🏷️ ${escapeHtml(cat)} <span>Loading…</span></div>
     </div>
-    <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>
-    <div class="load-more-wrap" id="homeLoadMoreWrap"></div>`;
+    <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>`;
 
   const q = encodeURIComponent(cat);
   try {
-    const data = await apiFetch(`${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video`);
+    // FIX 3: use regionCode=IN on category search
+    const data = await apiFetch(`${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video&regionCode=IN`);
     const items = data.items || [];
-    homeNextPageToken = data.nextPageToken || null;
+    globalNextPageToken = data.nextPageToken || null;
 
     if (!items.length) {
       homeContent.innerHTML = emptyHtml(`No results for "${cat}"`);
@@ -1745,29 +1995,183 @@ async function loadCategoryFeed(cat) {
     const titleEl = homeContent.querySelector('.section-title');
     if (titleEl) titleEl.innerHTML = `🏷️ ${escapeHtml(cat)} <span>${items.length} videos</span>`;
 
-    // ✅ Use buildSearchVideoCard (same visual template as home video cards)
-    // wrapped in the identical .videos-grid so cards never bleed outside
     const videoItems = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId);
+    // FIX 3: identical .video-card layout via buildSearchVideoCard
     grid.innerHTML = videoItems.map(v => buildSearchVideoCard(v)).join('');
     attachCardInteractions(homeContent);
-    renderHomeLoadMore();
     homeLoaded = true;
   } catch(err) {
     homeContent.innerHTML = errorHtml(err.message);
   }
 }
 
+async function appendCategoryFeed() {
+  const grid = document.getElementById('homeGrid');
+  if (!grid) return;
+  showScrollSpinner('homeGrid');
+  try {
+    const q = encodeURIComponent(activeCategoryName);
+    let url = `${BASE}/search?part=snippet&maxResults=12&q=${q}&type=video&regionCode=IN`;
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+    if (!items.length) return;
+    const videoItems = items.filter(i => i.id?.kind === 'youtube#video' || i.id?.videoId);
+    grid.insertAdjacentHTML('beforeend', videoItems.map(v => buildSearchVideoCard(v)).join(''));
+    attachCardInteractions(homeContent);
+  } catch(err) {
+    hideScrollSpinner();
+    showToast('Could not load more videos.');
+  }
+}
+
+/* ============================================================
+   SEARCH
+============================================================ */
+async function doSearch(query) {
+  if (!query.trim()) return;
+
+  activeCategory = 'All';
+  renderCategoryBar();
+
+  const isShorts = activeTab === 'shorts';
+  const container = isShorts ? shortsContent : homeContent;
+  showView('main');
+
+  // FIX 2: reset global scroll state for search
+  viewMode = 'search';
+  lastSearchQuery = query.trim();
+  globalNextPageToken = null;
+  scrollFetching = false;
+
+  const qEncoded = encodeURIComponent(query.trim());
+  let url = `${BASE}/search?part=snippet&maxResults=20&q=${qEncoded}`;
+  if (isShorts) url += '&type=video&videoDuration=short';
+
+  container.innerHTML = `
+    <div class="section-title">🔍 Results for "${escapeHtml(query)}"</div>
+    <div class="${isShorts ? 'shorts-grid' : 'mixed-grid'}" id="${isShorts ? 'shortsGrid' : 'searchGrid'}">${isShorts ? buildShortSkeletons(16) : buildVideoSkeletons(8)}</div>`;
+
+  try {
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+
+    if (!items.length) { container.innerHTML = emptyHtml(`No results for "${query}"`); return; }
+
+    if (isShorts) {
+      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
+      container.innerHTML = `
+        <div class="section-title">🔍 Shorts for "${escapeHtml(query)}" <span>${items.length}</span></div>
+        <div class="shorts-grid" id="shortsGrid">${cards || emptyHtml('No matching shorts.')}</div>`;
+    } else {
+      const channels = items.filter(i => i.id?.kind === 'youtube#channel');
+      const videos   = items.filter(i => i.id?.kind !== 'youtube#channel');
+      let html = `<div class="section-title">🔍 Results for "${escapeHtml(query)}" <span>${items.length} results</span></div>`;
+      if (channels.length) {
+        html += `<div class="section-title" style="margin-top:8px;font-size:0.85rem;color:var(--navy-60);">Channels</div>
+          <div class="channels-grid" style="margin-bottom:24px;">${channels.map(buildChannelCard).join('')}</div>`;
+      }
+      if (videos.length) {
+        html += `<div class="section-title" style="margin-top:4px;font-size:0.85rem;color:var(--navy-60);">Videos</div>
+          <div class="videos-grid" id="searchGrid">${videos.map(buildSearchVideoCard).join('')}</div>`;
+      }
+      container.innerHTML = html;
+    }
+    attachCardInteractions(container);
+  } catch(err) { container.innerHTML = errorHtml(err.message); }
+}
+
+async function appendSearchFeed() {
+  const grid = document.getElementById('searchGrid') || document.getElementById('shortsGrid');
+  if (!grid) return;
+  showScrollSpinner(grid.id);
+  try {
+    const q = encodeURIComponent(lastSearchQuery);
+    let url = `${BASE}/search?part=snippet&maxResults=20&q=${q}`;
+    if (activeTab === 'shorts') url += '&type=video&videoDuration=short';
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+    if (!items.length) return;
+
+    if (activeTab === 'shorts') {
+      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
+      grid.insertAdjacentHTML('beforeend', cards);
+      attachCardInteractions(shortsContent);
+    } else {
+      const videos = items.filter(i => i.id?.kind !== 'youtube#channel');
+      grid.insertAdjacentHTML('beforeend', videos.map(buildSearchVideoCard).join(''));
+      attachCardInteractions(homeContent);
+    }
+  } catch(err) {
+    hideScrollSpinner();
+    showToast('Could not load more results.');
+  }
+}
+
+/* ============================================================
+   TAB SWITCHING
+============================================================ */
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${activeTab}`).classList.add('active');
+    // reset scroll context on tab switch
+    scrollFetching = false;
+    if (activeTab === 'shorts') {
+      viewMode = 'shorts';
+      if (!shortsLoaded) loadShorts();
+    }
+    if (activeTab === 'home') {
+      viewMode = activeCategory !== 'All' ? 'category' : 'home';
+      if (!homeLoaded) loadHome();
+    }
+  });
+});
+
+/* ============================================================
+   SEARCH EVENTS
+============================================================ */
+searchBtn.addEventListener('click', () => doSearch(searchInput.value));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
+
+/* ============================================================
+   LOGO → HOME
+============================================================ */
+logoHome.addEventListener('click', () => {
+  watchPlayerWrap.innerHTML = '';
+  watchVideoId = null;
+  activeChannelId = null;
+  activeCategory = 'All';
+  globalNextPageToken = null;
+  scrollFetching = false;
+  viewMode = 'home';
+  homeIsRandomQuery = false;
+  homeCurrentQuery = '';
+  renderCategoryBar();
+  showView('main');
+  if (!homeLoaded) loadHome();
+});
+
 /* ============================================================
    VIDEO WATCH PAGE
 ============================================================ */
-async function openWatchPage(videoId, titleHint) {
+function openWatchPage(videoId, titleHint) {
+  if (!videoId) return;
   watchVideoId = videoId;
   watchLiked = false;
   watchDisliked = false;
 
   showView('watch');
 
-  // Inject player immediately
   watchPlayerWrap.innerHTML = `<iframe
     src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1"
     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
@@ -1775,7 +2179,6 @@ async function openWatchPage(videoId, titleHint) {
     title="${escapeHtml(titleHint)}">
   </iframe>`;
 
-  // Show skeleton meta
   watchTitle.textContent = titleHint || 'Loading…';
   watchStatsRow.innerHTML = `<div class="skeleton skeleton-line w60" style="height:12px;width:200px;"></div>`;
   watchChannelRow.innerHTML = `
@@ -1786,92 +2189,92 @@ async function openWatchPage(videoId, titleHint) {
     </div>`;
   watchRecList.innerHTML = buildRecSkeletons(10);
 
-  // Reset action buttons
   watchLikeBtn.classList.remove('liked');
   watchDislikeBtn.classList.remove('disliked');
   watchCopyBtn.classList.remove('copied');
   watchLikeCount.textContent = 'Like';
 
   try {
-    const [vidData, recData] = await Promise.all([
+    Promise.all([
       apiFetch(`${BASE}/videos?part=snippet,statistics&id=${encodeURIComponent(videoId)}`),
       apiFetch(`${BASE}/search?part=snippet&maxResults=15&relatedToVideoId=${encodeURIComponent(videoId)}&type=video`)
         .catch(() => apiFetch(`${BASE}/search?part=snippet&maxResults=15&q=${encodeURIComponent(titleHint||'trending')}&type=video`))
-    ]);
+    ]).then(([vidData, recData]) => {
+      const vid = vidData.items && vidData.items[0];
+      if (vid) {
+        const s = vid.snippet || {}, st = vid.statistics || {};
+        watchTitle.textContent = s.title || titleHint || '';
+        const views = formatViews(st.viewCount);
+        const likes = st.likeCount ? formatCount(st.likeCount) + ' likes' : '';
+        const date = s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
+        watchStatsRow.innerHTML = [views, likes, date].filter(Boolean).map((t,i,a) =>
+          `<span>${escapeHtml(t)}</span>${i<a.length-1?'<span class="dot"></span>':''}`
+        ).join('');
+        watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
 
-    const vid = vidData.items && vidData.items[0];
-    if (vid) {
-      const s = vid.snippet || {}, st = vid.statistics || {};
-      watchTitle.textContent = s.title || titleHint || '';
-      const views = formatViews(st.viewCount);
-      const likes = st.likeCount ? formatCount(st.likeCount) + ' likes' : '';
-      const date = s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '';
-      watchStatsRow.innerHTML = [views, likes, date].filter(Boolean).map((t,i,a) =>
-        `<span>${escapeHtml(t)}</span>${i<a.length-1?'<span class="dot"></span>':''}`
-      ).join('');
-      watchLikeCount.textContent = st.likeCount ? formatCount(st.likeCount) : 'Like';
+        const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
+        const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
+        watchChannelRow.innerHTML = `
+          <span class="watch-ch-avatar-init" style="background:${avatarColor(s.channelTitle||'')};">${initial}</span>
+          <div class="watch-ch-info">
+            <div class="watch-ch-name" data-channelid="${channelId}">${channelTitle}</div>
+            <div class="watch-ch-subs" id="watchChSubs">Loading subscribers…</div>
+          </div>
+          <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
 
-      const channelId = s.channelId||'', channelTitle = escapeHtml(s.channelTitle||'');
-      const initial = (s.channelTitle||'?').trim().charAt(0).toUpperCase()||'?';
-      watchChannelRow.innerHTML = `
-        <span class="watch-ch-avatar-init" style="background:${avatarColor(s.channelTitle||'')};">${initial}</span>
-        <div class="watch-ch-info">
-          <div class="watch-ch-name" data-channelid="${channelId}">${channelTitle}</div>
-          <div class="watch-ch-subs" id="watchChSubs">Loading subscribers…</div>
-        </div>
-        <button class="watch-subscribe-btn" id="watchSubBtn">Subscribe</button>`;
+        if (channelId) {
+          apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
+            const st2 = ch.items && ch.items[0] && ch.items[0].statistics;
+            const subs = st2?.hiddenSubscriberCount ? 'Subscribers hidden' : (formatCount(st2?.subscriberCount)||'');
+            const el = document.getElementById('watchChSubs');
+            if (el) el.textContent = subs ? subs + ' subscribers' : '';
 
-      if (channelId) {
-        apiFetch(`${BASE}/channels?part=statistics,snippet&id=${encodeURIComponent(channelId)}`).then(ch => {
-          const st2 = ch.items && ch.items[0] && ch.items[0].statistics;
-          const subs = st2?.hiddenSubscriberCount ? 'Subscribers hidden' : (formatCount(st2?.subscriberCount)||'');
-          const el = document.getElementById('watchChSubs');
-          if (el) el.textContent = subs ? subs + ' subscribers' : '';
-
-          const avatarUrl = ch.items&&ch.items[0]&&ch.items[0].snippet?.thumbnails?.high?.url;
-          if (avatarUrl) {
-            const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
-            if (initEl) {
-              const img = document.createElement('img');
-              img.className = 'watch-ch-avatar'; img.src = avatarUrl; img.alt = channelTitle;
-              img.onerror = () => {};
-              initEl.replaceWith(img);
+            const avatarUrl = ch.items&&ch.items[0]&&ch.items[0].snippet?.thumbnails?.high?.url;
+            if (avatarUrl) {
+              const initEl = watchChannelRow.querySelector('.watch-ch-avatar-init');
+              if (initEl) {
+                const img = document.createElement('img');
+                img.className = 'watch-ch-avatar'; img.src = avatarUrl; img.alt = channelTitle;
+                img.onerror = () => {};
+                initEl.replaceWith(img);
+              }
             }
-          }
-        }).catch(()=>{});
+          }).catch(()=>{});
+        }
+
+        const subBtn = document.getElementById('watchSubBtn');
+        if (subBtn) {
+          let subscribed = false;
+          subBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            subscribed = !subscribed;
+            subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
+            subBtn.classList.toggle('subscribed', subscribed);
+            showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
+          });
+        }
+
+        const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
+        if (chNameEl) {
+          chNameEl.addEventListener('click', e => {
+            e.stopPropagation();
+            if (channelId) openChannelPage(channelId);
+          });
+        }
       }
 
-      const subBtn = document.getElementById('watchSubBtn');
-      if (subBtn) {
-        let subscribed = false;
-        subBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          subscribed = !subscribed;
-          subBtn.textContent = subscribed ? 'Subscribed ✓' : 'Subscribe';
-          subBtn.classList.toggle('subscribed', subscribed);
-          showToast(subscribed ? 'Subscribed!' : 'Unsubscribed');
-        });
+      const recItems = (recData.items||[]).filter(i => i.id?.videoId);
+      if (recItems.length) {
+        watchRecList.innerHTML = recItems.map(buildRecCard).join('');
+        attachCardInteractions(watchRecList);
+      } else {
+        watchRecList.innerHTML = emptyHtml('No recommendations available.');
       }
-
-      const chNameEl = watchChannelRow.querySelector('.watch-ch-name');
-      if (chNameEl) {
-        chNameEl.addEventListener('click', e => {
-          e.stopPropagation();
-          if (channelId) openChannelPage(channelId);
-        });
-      }
-    }
-
-    const recItems = (recData.items||[]).filter(i => i.id?.videoId);
-    if (recItems.length) {
-      watchRecList.innerHTML = recItems.map(buildRecCard).join('');
-      attachCardInteractions(watchRecList);
-    } else {
-      watchRecList.innerHTML = emptyHtml('No recommendations available.');
-    }
-
+    }).catch(err => {
+      watchStatsRow.innerHTML = '';
+      watchChannelRow.innerHTML = errorHtml(err.message);
+    });
   } catch(err) {
-    watchStatsRow.innerHTML = '';
     watchChannelRow.innerHTML = errorHtml(err.message);
   }
 }
@@ -1907,11 +2310,20 @@ watchCopyBtn.addEventListener('click', () => {
 watchBackBtn.addEventListener('click', () => {
   watchPlayerWrap.innerHTML = '';
   watchVideoId = null;
+  // restore scroll context
+  scrollFetching = false;
   showView('main');
 });
 
 /* ============================================================
-   CHANNEL PAGE — FIX 1: clean stacked layout, no banner overlap issues
+   ╔══════════════════════════════════════════════════════════╗
+   ║  FIX 4: CHANNEL PAGE — true infinite feed               ║
+   ╚══════════════════════════════════════════════════════════╝
+   - Fetches via channelId search with order=date, maxResults=15
+   - Hooks globalNextPageToken + viewMode='channel' so the global
+     scroll listener appends more uploads automatically
+   - Works across Home, Videos, Shorts sub-tabs
+   - No hard cap on content
 ============================================================ */
 function channelSkeletonHtml() {
   return `
@@ -1946,6 +2358,13 @@ async function openChannelPage(channelId) {
   if (!channelId) return;
   activeChannelId = channelId;
   activeChTab = 'home';
+
+  // FIX 4: reset global scroll for channel context
+  viewMode = 'channel';
+  globalNextPageToken = null;
+  scrollFetching = false;
+  channelScrollCtx = { channelId, tab: 'home' };
+
   showView('channel');
   channelPageContent.innerHTML = channelSkeletonHtml();
 
@@ -1964,7 +2383,6 @@ function renderChannelShell(ch, channelId) {
   const sn = ch.snippet||{}, st = ch.statistics||{};
   const branding = (ch.brandingSettings && ch.brandingSettings.image) || {};
 
-  // Banner URL — YouTube banner with landscape crop parameter
   let bannerUrl = branding.bannerExternalUrl || '';
   if (bannerUrl) bannerUrl += '=w1280-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj';
 
@@ -1979,13 +2397,11 @@ function renderChannelShell(ch, channelId) {
   const initial = title.charAt(0).toUpperCase() || '?';
   const avatarColor2 = avatarColor(sn.title || '');
 
-  // Avatar: image if available, else colored initial circle
   const avatarHtml = avatarUrl
     ? `<img class="ch-avatar-img" src="${avatarUrl}" alt="${title}"
          onerror="this.outerHTML='<div class=\\'ch-avatar-init\\' style=\\'background:${avatarColor2};\\'>${initial}</div>'" />`
     : `<div class="ch-avatar-init" style="background:${avatarColor2};">${initial}</div>`;
 
-  // Stats row — only render populated items
   const statsItems = [subCount, videoCount].filter(Boolean);
   const statsHtml = statsItems.map((item, i) =>
     `<span>${escapeHtml(item)}</span>${i < statsItems.length - 1 ? '<span class="dot"></span>' : ''}`
@@ -1993,19 +2409,13 @@ function renderChannelShell(ch, channelId) {
 
   channelPageContent.innerHTML = `
     <div class="ch-profile-card">
-
-      <!-- 1. Banner — full width, clean 4:1 aspect, no text overlap -->
       <div class="ch-banner-wrap">
         ${bannerUrl
           ? `<img src="${bannerUrl}" alt="${title} banner" onerror="this.outerHTML='<div class=\\'ch-banner-placeholder\\'></div>'" />`
           : `<div class="ch-banner-placeholder"></div>`}
       </div>
-
-      <!-- 2. Avatar + Identity + Subscribe -->
       <div class="ch-identity-row">
-        <div class="ch-avatar-wrap">
-          ${avatarHtml}
-        </div>
+        <div class="ch-avatar-wrap">${avatarHtml}</div>
         <div class="ch-identity-info">
           <div class="ch-title">${title}</div>
           ${handle ? `<div class="ch-handle">${handle}</div>` : ''}
@@ -2013,11 +2423,7 @@ function renderChannelShell(ch, channelId) {
         </div>
         <button class="ch-subscribe-btn" id="chSubBtn">Subscribe</button>
       </div>
-
-      <!-- 3. Description -->
       ${desc ? `<p class="ch-desc">${desc}</p>` : ''}
-
-      <!-- 4. Navigation tabs -->
       <div class="ch-tabs-bar" id="chTabsBar">
         ${['home','videos','shorts','playlists'].map(t => `
           <button class="ch-tab-btn${t === 'home' ? ' active' : ''}" data-chtab="${t}">
@@ -2025,15 +2431,11 @@ function renderChannelShell(ch, channelId) {
           </button>
         `).join('')}
       </div>
-
     </div>
-
-    <!-- 5. Content area below card -->
     <div class="channel-content-area" id="chContentArea" style="margin-top:24px;">
       <div class="videos-grid">${buildVideoSkeletons(8)}</div>
     </div>`;
 
-  // Subscribe toggle
   const subBtn = document.getElementById('chSubBtn');
   if (subBtn) {
     let subscribed = false;
@@ -2046,25 +2448,31 @@ function renderChannelShell(ch, channelId) {
     });
   }
 
-  // Tab click events
   channelPageContent.querySelectorAll('.ch-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       channelPageContent.querySelectorAll('.ch-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeChTab = btn.dataset.chtab;
+      // FIX 4: reset scroll token on tab switch within channel
+      globalNextPageToken = null;
+      scrollFetching = false;
+      channelScrollCtx = { channelId, tab: activeChTab };
       loadChannelTab(activeChTab, channelId, sn);
     });
   });
 }
 
+// FIX 4: loadChannelTab fetches 15 videos and stores nextPageToken globally
 async function loadChannelTab(tab, channelId, sn) {
   const area = document.getElementById('chContentArea');
   if (!area) return;
 
   if (tab === 'playlists') {
-    area.innerHTML = `<div class="videos-grid">${buildVideoSkeletons(6)}</div>`;
+    // Playlists don't paginate with infinite scroll (limited content)
+    globalNextPageToken = null;
+    area.innerHTML = `<div class="playlists-grid">${buildVideoSkeletons(6)}</div>`;
     try {
-      const data = await apiFetch(`${BASE}/playlists?part=snippet,contentDetails&channelId=${encodeURIComponent(channelId)}&maxResults=10`);
+      const data = await apiFetch(`${BASE}/playlists?part=snippet,contentDetails&channelId=${encodeURIComponent(channelId)}&maxResults=20`);
       const items = data.items || [];
       if (!items.length) { area.innerHTML = emptyHtml('No playlists found.'); return; }
       const cards = items.map(pl => {
@@ -2091,229 +2499,79 @@ async function loadChannelTab(tab, channelId, sn) {
     return;
   }
 
-  // home, videos, shorts — use skeleton matching expected layout
   if (tab === 'shorts') {
-    area.innerHTML = `<div class="shorts-grid">${buildShortSkeletons(8)}</div>`;
+    area.innerHTML = `<div class="shorts-grid" id="chVideoGrid">${buildShortSkeletons(8)}</div>`;
   } else {
-    area.innerHTML = `<div class="videos-grid">${buildVideoSkeletons(8)}</div>`;
+    area.innerHTML = `<div class="videos-grid" id="chVideoGrid">${buildVideoSkeletons(8)}</div>`;
   }
 
+  // FIX 4: build channel search URL, store token in globalNextPageToken
   let url = `${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=15&type=video&order=date`;
-  if (tab === 'shorts') url += '&videoDuration=short&q=shorts';
+  if (tab === 'shorts') url += '&videoDuration=short';
 
   try {
     const data = await apiFetch(url);
     const items = data.items || [];
+    // FIX 4: hook token into global infinite scroll
+    globalNextPageToken = data.nextPageToken || null;
+    channelScrollCtx = { channelId, tab };
+
+    const grid = document.getElementById('chVideoGrid');
+    if (!grid) return;
     if (!items.length) { area.innerHTML = emptyHtml('No videos found.'); return; }
 
     if (tab === 'shorts') {
-      area.innerHTML = `<div class="shorts-grid">${items.map(buildShortCard).join('')}</div>`;
+      grid.innerHTML = items.map(buildShortCard).join('');
     } else {
-      // Use buildSearchVideoCard to keep consistent grid card layout on channel page
-      area.innerHTML = `<div class="videos-grid">${items.map(v => buildSearchVideoCard(v)).join('')}</div>`;
+      grid.innerHTML = items.map(v => buildSearchVideoCard(v)).join('');
     }
     attachCardInteractions(area);
   } catch(err) { area.innerHTML = errorHtml(err.message); }
 }
 
+// FIX 4: called by infinite scroll engine when viewMode === 'channel'
+async function appendChannelFeed() {
+  if (!channelScrollCtx) return;
+  const { channelId, tab } = channelScrollCtx;
+  if (tab === 'playlists') return; // playlists don't paginate via scroll
+
+  const grid = document.getElementById('chVideoGrid');
+  if (!grid) return;
+  showScrollSpinner('chVideoGrid');
+
+  try {
+    let url = `${BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&maxResults=15&type=video&order=date`;
+    if (tab === 'shorts') url += '&videoDuration=short';
+    if (globalNextPageToken) url += `&pageToken=${encodeURIComponent(globalNextPageToken)}`;
+
+    const data = await apiFetch(url);
+    const items = data.items || [];
+    globalNextPageToken = data.nextPageToken || null;
+    hideScrollSpinner();
+
+    if (!items.length) return;
+
+    if (tab === 'shorts') {
+      grid.insertAdjacentHTML('beforeend', items.map(buildShortCard).join(''));
+    } else {
+      grid.insertAdjacentHTML('beforeend', items.map(v => buildSearchVideoCard(v)).join(''));
+    }
+    const area = document.getElementById('chContentArea');
+    if (area) attachCardInteractions(area);
+  } catch(err) {
+    hideScrollSpinner();
+    showToast('Could not load more channel videos.');
+  }
+}
+
 channelBackBtn.addEventListener('click', () => {
   activeChannelId = null;
+  // Clear channel scroll context, restore previous view's mode
+  channelScrollCtx = null;
+  globalNextPageToken = null;
+  scrollFetching = false;
+  viewMode = activeCategory !== 'All' ? 'category' : 'home';
   showView('main');
-});
-
-/* ============================================================
-   HOME FEED LOADERS
-============================================================ */
-async function loadHome(opts = {}) {
-  const append = !!opts.append;
-  const variant = FEED_VARIANTS[currentFeedIndex];
-
-  if (!append) {
-    homeNextPageToken = null;
-    homeContent.innerHTML = `
-      <div class="section-title-row">
-        <div class="section-title">🔥 ${variant.label}</div>
-        <button class="refresh-btn" id="refreshFeedBtn" title="Refresh feed">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          <span class="refresh-label">Refresh Feed</span>
-        </button>
-      </div>
-      <div class="videos-grid" id="homeGrid">${buildVideoSkeletons(12)}</div>
-      <div class="load-more-wrap" id="homeLoadMoreWrap"></div>`;
-    document.getElementById('refreshFeedBtn').addEventListener('click', refreshFeed);
-  }
-
-  const grid = document.getElementById('homeGrid');
-  try {
-    let url = `${BASE}/videos?part=snippet,statistics&${variant.params}&maxResults=12`;
-    if (append && homeNextPageToken) url += `&pageToken=${encodeURIComponent(homeNextPageToken)}`;
-    const data = await apiFetch(url);
-    const items = data.items || [];
-    homeNextPageToken = data.nextPageToken || null;
-    if (!items.length && !append) { grid.innerHTML = emptyHtml('No trending videos found.'); renderHomeLoadMore(); return; }
-    const cards = items.map(v => buildVideoCard(v, v.id)).join('');
-    if (append) grid.insertAdjacentHTML('beforeend', cards);
-    else grid.innerHTML = cards;
-    attachCardInteractions(homeContent);
-    renderHomeLoadMore();
-    homeLoaded = true;
-  } catch(err) {
-    if (append) { showToast('Could not load more videos.'); renderHomeLoadMore(); }
-    else homeContent.innerHTML = errorHtml(err.message);
-  }
-}
-
-function renderHomeLoadMore() {
-  const wrap = document.getElementById('homeLoadMoreWrap');
-  if (!wrap) return;
-  if (homeNextPageToken) {
-    wrap.innerHTML = `<button class="load-more-btn" id="homeLoadMoreBtn">Load More Videos</button>`;
-    document.getElementById('homeLoadMoreBtn').addEventListener('click', async e => {
-      e.currentTarget.disabled = true; e.currentTarget.textContent = 'Loading…';
-      await loadHome({ append: true });
-    });
-  } else { wrap.innerHTML = ''; }
-}
-
-function refreshFeed() {
-  const btn = document.getElementById('refreshFeedBtn');
-  if (btn) btn.classList.add('spinning');
-  let next = currentFeedIndex;
-  if (FEED_VARIANTS.length > 1) while (next === currentFeedIndex) next = Math.floor(Math.random()*FEED_VARIANTS.length);
-  currentFeedIndex = next;
-  activeCategory = 'All';
-  renderCategoryBar();
-  loadHome().finally(() => { if (btn) setTimeout(()=>btn.classList?.remove('spinning'), 50); });
-}
-
-/* ============================================================
-   SHORTS LOADER
-============================================================ */
-async function loadShorts(opts = {}) {
-  const append = !!opts.append;
-  if (!append) {
-    shortsNextPageToken = null;
-    shortsContent.innerHTML = `
-      <div class="section-title-row"><div class="section-title">⚡ Shorts</div></div>
-      <div class="shorts-grid" id="shortsGrid">${buildShortSkeletons(16)}</div>
-      <div class="load-more-wrap" id="shortsLoadMoreWrap"></div>`;
-  }
-  const grid = document.getElementById('shortsGrid');
-  try {
-    let url = `${BASE}/search?part=snippet&maxResults=16&q=shorts&type=video&videoDuration=short`;
-    if (append && shortsNextPageToken) url += `&pageToken=${encodeURIComponent(shortsNextPageToken)}`;
-    const data = await apiFetch(url);
-    const items = data.items || [];
-    shortsNextPageToken = data.nextPageToken || null;
-    if (!items.length && !append) { grid.innerHTML = emptyHtml('No shorts found.'); renderShortsLoadMore(); return; }
-    const cards = items.map(buildShortCard).join('');
-    if (append) grid.insertAdjacentHTML('beforeend', cards);
-    else grid.innerHTML = cards;
-    attachCardInteractions(shortsContent);
-    renderShortsLoadMore();
-    shortsLoaded = true;
-  } catch(err) {
-    if (append) { showToast('Could not load more shorts.'); renderShortsLoadMore(); }
-    else shortsContent.innerHTML = errorHtml(err.message);
-  }
-}
-
-function renderShortsLoadMore() {
-  const wrap = document.getElementById('shortsLoadMoreWrap');
-  if (!wrap) return;
-  if (shortsNextPageToken) {
-    wrap.innerHTML = `<button class="load-more-btn" id="shortsLoadMoreBtn">Load More Shorts</button>`;
-    document.getElementById('shortsLoadMoreBtn').addEventListener('click', async e => {
-      e.currentTarget.disabled = true; e.currentTarget.textContent = 'Loading…';
-      await loadShorts({ append: true });
-    });
-  } else { wrap.innerHTML = ''; }
-}
-
-/* ============================================================
-   SEARCH
-============================================================ */
-async function doSearch(query) {
-  if (!query.trim()) return;
-
-  activeCategory = 'All';
-  renderCategoryBar();
-
-  const isShorts = activeTab === 'shorts';
-  const container = isShorts ? shortsContent : homeContent;
-  showView('main');
-
-  const qEncoded = encodeURIComponent(query.trim());
-  let url = `${BASE}/search?part=snippet&maxResults=20&q=${qEncoded}`;
-  if (isShorts) url += '&type=video&videoDuration=short';
-
-  container.innerHTML = `
-    <div class="section-title">🔍 Results for "${escapeHtml(query)}"</div>
-    <div class="${isShorts ? 'shorts-grid' : 'mixed-grid'}">${isShorts ? buildShortSkeletons(16) : buildVideoSkeletons(8)}</div>`;
-
-  try {
-    const data = await apiFetch(url);
-    const items = data.items || [];
-    if (!items.length) { container.innerHTML = emptyHtml(`No results for "${query}"`); return; }
-
-    if (isShorts) {
-      const cards = items.filter(i => i.id?.kind === 'youtube#video').map(buildShortCard).join('');
-      container.innerHTML = `
-        <div class="section-title">🔍 Shorts for "${escapeHtml(query)}" <span>${items.length}</span></div>
-        <div class="shorts-grid">${cards || emptyHtml('No matching shorts.')}</div>`;
-    } else {
-      const channels = items.filter(i => i.id?.kind === 'youtube#channel');
-      const videos   = items.filter(i => i.id?.kind !== 'youtube#channel');
-      let html = `<div class="section-title">🔍 Results for "${escapeHtml(query)}" <span>${items.length} results</span></div>`;
-      if (channels.length) {
-        html += `<div class="section-title" style="margin-top:8px;font-size:0.85rem;color:var(--navy-60);">Channels</div>
-          <div class="channels-grid" style="margin-bottom:24px;">${channels.map(buildChannelCard).join('')}</div>`;
-      }
-      if (videos.length) {
-        html += `<div class="section-title" style="margin-top:4px;font-size:0.85rem;color:var(--navy-60);">Videos</div>
-          <div class="mixed-grid">${videos.map(buildResultRow).join('')}</div>`;
-      }
-      container.innerHTML = html;
-    }
-    attachCardInteractions(container);
-  } catch(err) { container.innerHTML = errorHtml(err.message); }
-}
-
-/* ============================================================
-   TAB SWITCHING
-============================================================ */
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeTab = btn.dataset.tab;
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.getElementById(`tab-${activeTab}`).classList.add('active');
-    if (activeTab === 'shorts' && !shortsLoaded) loadShorts();
-    if (activeTab === 'home' && !homeLoaded) loadHome();
-  });
-});
-
-/* ============================================================
-   SEARCH EVENTS
-============================================================ */
-searchBtn.addEventListener('click', () => doSearch(searchInput.value));
-searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
-
-/* ============================================================
-   LOGO → HOME
-============================================================ */
-logoHome.addEventListener('click', () => {
-  watchPlayerWrap.innerHTML = '';
-  watchVideoId = null;
-  activeChannelId = null;
-  activeCategory = 'All';
-  renderCategoryBar();
-  showView('main');
-  if (!homeLoaded) loadHome();
 });
 
 /* ============================================================
